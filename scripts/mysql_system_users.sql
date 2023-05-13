@@ -51,3 +51,24 @@ REVOKE ALL PRIVILEGES, GRANT OPTION FROM 'mysql.infoschema'@localhost;
 GRANT SELECT ON *.* TO 'mysql.infoschema'@localhost;
 GRANT SYSTEM_USER ON *.* TO 'mysql.infoschema'@localhost;
 
+-- new: separation of powers
+create user admin@'%' identified by '123456';
+grant grant option on *.* to 'admin'@'%';
+grant all privileges on *.* to 'admin'@'%';
+
+create user supervisor@'%' identified by '123456';
+grant grant option on *.* to 'supervisor'@'%';
+grant usage on mysql.* to 'supervisor'@'%';
+grant all privileges on mysql.abac_level_sec to 'supervisor'@'%';
+grant all privileges on mysql.abac_domain_sec to 'supervisor'@'%';
+grant all privileges on mysql.abac_domain_sec_poset to 'supervisor'@'%';
+grant all privileges on mysql.abac_level_sec_poset to 'supervisor'@'%';
+grant all privileges on mysql.abac_attributes to 'supervisor'@'%';
+grant all privileges on mysql.abac_attribute_manager to 'supervisor'@'%';
+grant all privileges on mysql.abac_policies to 'supervisor'@'%';
+
+create user auditor@'%' identified by '123456';
+grant grant option on *.* to 'auditor'@'%';
+grant usage on mysql.* to 'auditor'@'%';
+grant all privileges on audit_log.* to 'auditor'@'%';
+grant all privileges on mysql.general_log to 'auditor'@'%';
