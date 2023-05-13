@@ -519,6 +519,80 @@ INSERT IGNORE INTO server_cost(cost_name) VALUES
   ("memory_temptable_create_cost"), ("memory_temptable_row_cost"),
   ("disk_temptable_create_cost"), ("disk_temptable_row_cost");
 
+
+
+-- new added
+
+CREATE DATABASE audit_log;
+
+CREATE TABLE IF NOT EXISTS abac_level_sec (
+  level_name varchar(60) NOT NULL,
+  PRIMARY KEY(level_name) ) 
+  ENGINE=InnoDB CHARACTER SET=utf8 COLLATE=utf8_general_ci;
+
+CREATE TABLE IF NOT EXISTS abac_level_sec_poset (
+  level_h varchar(60) NOT NULL, 
+  level_l varchar(60) NOT NULL,
+  level_relation_id int auto_increment primary key,
+  foreign key(level_h) references abac_level_sec(level_name),
+  foreign key(level_l) references abac_level_sec(level_name)) 
+  ENGINE=InnoDB CHARACTER SET=utf8 COLLATE=utf8_general_ci;
+
+CREATE TABLE IF NOT EXISTS abac_domain_sec (
+  domain_name varchar(60) NOT NULL,
+  PRIMARY KEY(domain_name) ) 
+  ENGINE=InnoDB CHARACTER SET=utf8 COLLATE=utf8_general_ci;
+
+CREATE TABLE IF NOT EXISTS abac_domain_sec_poset (
+  domain_h varchar(60) NOT NULL, 
+  domain_l varchar(60) NOT NULL,
+  domain_relation_id int auto_increment primary key,
+  foreign key(domain_h) references abac_domain_sec(domain_name),
+  foreign key(domain_l) references abac_domain_sec(domain_name)) 
+  ENGINE=InnoDB CHARACTER SET=utf8 COLLATE=utf8_general_ci;
+
+CREATE TABLE IF NOT EXISTS abac_attributes(
+	id int auto_increment primary key,
+	att_name varchar(60) not null unique,
+	type ENUM ('string','int','double','set') not null)
+	ENGINE=InnoDB CHARACTER SET=utf8 COLLATE=utf8_general_ci;
+
+CREATE TABLE IF NOT EXISTS abac_attribute_manager(
+	object varchar(60) not null,
+  att_name varchar(60) not null,
+	attribute_value varchar(60) not null,
+  attribute_manager_id int auto_increment primary key,
+  unique(object, att_name, attribute_value),
+	foreign key(att_name) references abac_attributes(att_name))
+	ENGINE=InnoDB CHARACTER SET=utf8 COLLATE=utf8_general_ci;
+
+CREATE TABLE IF NOT EXISTS abac_policies(
+	subject varchar(60) not null,
+	object varchar(60) not null,
+  obj_typ ENUM ('database','table','column','any') not null,
+	operation int not null,
+  policy_name varchar(60) not null,
+  policy_id int auto_increment primary key,
+  att_name varchar(60) not null,
+  const_val varchar(60),
+  operator varchar(20) not null,
+  tag ENUM ('AttValAttval','AttValConstVal','EnvValConstVal') not null,
+  sub_att int,
+  obj_att int,
+  policy_enable BOOLEAN default true,
+  foreign key(att_name) references abac_attributes(att_name),
+  foreign key(sub_att) references abac_attribute_manager(attribute_manager_id),
+  foreign key(obj_att) references abac_attribute_manager(attribute_manager_id))
+	ENGINE=InnoDB CHARACTER SET=utf8 COLLATE=utf8_general_ci;
+
+
+CREATE TABLE IF NOT EXISTS sec_role (
+  user varchar(60) NOT NULL, 
+  role varchar(60) NOT NULL, 
+  passwd char(41) NOT NULL, 
+  PRIMARY KEY(user, role) ) 
+  ENGINE=InnoDB CHARACTER SET=utf8 COLLATE=utf8_general_ci;
+
 -- Engine cost constants
 
 SET @cmd = "CREATE TABLE IF NOT EXISTS engine_cost (

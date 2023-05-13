@@ -107,6 +107,10 @@ int mysql_execute_command(THD *thd, bool first_level = false);
 bool do_command(THD *thd);
 bool dispatch_command(THD *thd, const COM_DATA *com_data,
                       enum enum_server_command command);
+
+
+
+                    
 bool prepare_index_and_data_dir_path(THD *thd, const char **data_file_name,
                                      const char **index_file_name,
                                      const char *table_name);

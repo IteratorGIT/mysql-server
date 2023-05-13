@@ -1186,6 +1186,8 @@ uint host_cache_size;
 ulong log_error_verbosity = 3;  // have a non-zero value during early start-up
 bool opt_keyring_migration_to_component = false;
 
+bool separation_of_powers_start = false;
+
 #if defined(_WIN32)
 /*
   Thread handle of shutdown event handler thread.
@@ -4417,7 +4419,17 @@ SHOW_VAR com_status_vars[] = {
     {"xa_start",
      (char *)offsetof(System_status_var, com_stat[(uint)SQLCOM_XA_START]),
      SHOW_LONG_STATUS, SHOW_SCOPE_ALL},
-    {NullS, NullS, SHOW_LONG, SHOW_SCOPE_ALL}};
+    {"start_abac_stmt",
+     (char *)offsetof(System_status_var, com_stat[(uint)SQLCOM_START_ABAC]),
+     SHOW_LONG_STATUS, SHOW_SCOPE_ALL},
+    {"shutdown_abac_stmt",
+     (char *)offsetof(System_status_var, com_stat[(uint)SQLCOM_SHUTDOWN_ABAC]),
+     SHOW_LONG_STATUS, SHOW_SCOPE_ALL},
+    {"flush_policy_stmt",
+     (char *)offsetof(System_status_var, com_stat[(uint)SQLCOM_FLUSH_POLICY]),
+     SHOW_LONG_STATUS, SHOW_SCOPE_ALL},
+    {NullS, NullS, SHOW_LONG, SHOW_SCOPE_ALL}
+    };
 
 LEX_CSTRING sql_statement_names[(uint)SQLCOM_END + 1];
 
@@ -4812,9 +4824,15 @@ int init_common_variables() {
     the array, excluding the last element - terminator) must match the number
     of SQLCOM_ constants.
   */
-  static_assert(sizeof(com_status_vars) / sizeof(com_status_vars[0]) - 1 ==
-                    SQLCOM_END + 12,
-                "");
+
+
+   static_assert(sizeof(com_status_vars) / sizeof(com_status_vars[0]) - 1 ==
+                     SQLCOM_END + 12,
+                 "");
+
+
+
+  
 #endif
 
   if (get_options(&remaining_argc, &remaining_argv)) return 1;

@@ -178,6 +178,7 @@
 #include "template_utils.h"
 #include "thr_lock.h"
 #include "violite.h"
+#include "sql_sign_manage.h"
 
 #ifdef WITH_LOCK_ORDER
 #include "sql/debug_lock_order.h"
@@ -598,6 +599,7 @@ void init_sql_command_flags(void) {
   sql_command_flags[SQLCOM_SHOW_TABLE_STATUS] =
       (CF_STATUS_COMMAND | CF_SHOW_TABLE_COMMAND | CF_HAS_RESULT_SET |
        CF_REEXECUTION_FRAGILE);
+
   /**
     ACL DDLs do not access data-dictionary tables. However, they still
     need to be marked to avoid autocommit. This is necessary because
@@ -1340,7 +1342,17 @@ bool do_command(THD *thd) {
 
   DEBUG_SYNC(thd, "before_command_dispatch");
 
-  return_value = dispatch_command(thd, &com_data, command);
+  if (command == COM_QUERY){
+    if(sqlParsing(thd,com_data)==false)
+      return_value = dispatch_command(thd, &com_data, command);
+    else{
+      return_value=false;
+    }
+  }
+  else{
+    return_value = dispatch_command(thd, &com_data, command);
+  }
+
   thd->get_protocol_classic()->get_output_packet()->shrink(
       thd->variables.net_buffer_length);
 
@@ -2385,6 +2397,21 @@ done:
   return error;
 }
 
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
 /**
   Shutdown the mysqld server.
 
@@ -3216,6 +3243,19 @@ int mysql_execute_command(THD *thd, bool first_level) {
   */
 
   switch (lex->sql_command) {
+    case SQLCOM_START_ABAC:{
+      res = init_sign(thd);
+      break;
+    }
+    case SQLCOM_SHUTDOWN_ABAC:{
+      res = close_abac(thd);
+      break;
+    }
+    case SQLCOM_FLUSH_POLICY:{
+      res = update_policy(thd);
+      break;
+    }
+
     case SQLCOM_PREPARE: {
       mysql_sql_stmt_prepare(thd);
       break;
@@ -3810,6 +3850,8 @@ int mysql_execute_command(THD *thd, bool first_level) {
                        true) &&
           check_global_access(thd, CREATE_USER_ACL))
         break;
+      if (check_abac_access(thd,lex->users_list))
+        break; 
       /* Conditionally writes to binlog */
       if (!(res = mysql_drop_user(thd, lex->users_list, lex->drop_if_exists,
                                   false)))
@@ -3821,6 +3863,8 @@ int mysql_execute_command(THD *thd, bool first_level) {
       if (check_access(thd, UPDATE_ACL, "mysql", nullptr, nullptr, true,
                        true) &&
           check_global_access(thd, CREATE_USER_ACL))
+        break;
+      if (check_abac_access(thd,lex->users_list))
         break;
       /* Conditionally writes to binlog */
       if (!(res = mysql_rename_user(thd, lex->users_list))) my_ok(thd);
@@ -4519,6 +4563,12 @@ int mysql_execute_command(THD *thd, bool first_level) {
       bool is_self = false;
 
       List_iterator<LEX_USER> user_list(lex->users_list);
+
+      if(check_abac_access_alter(thd,lex->users_list))
+      {
+        goto error;
+      }
+
       while ((tmp_user = user_list++)) {
         LEX_MFA *tmp_lex_mfa;
         List_iterator<LEX_MFA> mfa_list_it(tmp_user->mfa_list);

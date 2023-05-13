@@ -568,7 +568,7 @@ void warn_about_deprecated_binary(THD *thd)
 %token  ALL 268                           /* SQL-2003-R */
 %token  ALTER 269                         /* SQL-2003-R */
 %token<lexer.keyword> ALWAYS_SYM 270
-%token  OBSOLETE_TOKEN_271 271            /* was: ANALYSE_SYM */
+/* %token  OBSOLETE_TOKEN_271 271  */           /* was: ANALYSE_SYM */
 %token  ANALYZE_SYM 272
 %token  AND_AND_SYM 273                   /* OPERATOR */
 %token  AND_SYM 274                       /* SQL-2003-R */
@@ -685,7 +685,7 @@ void warn_about_deprecated_binary(THD *thd)
 %token  DELETE_SYM 385                    /* SQL-2003-R */
 %token  DESC 386                          /* SQL-2003-N */
 %token  DESCRIBE 387                      /* SQL-2003-R */
-%token  OBSOLETE_TOKEN_388 388            /* was: DES_KEY_FILE */
+/*%token  OBSOLETE_TOKEN_388 388             was: DES_KEY_FILE */
 %token  DETERMINISTIC_SYM 389             /* SQL-2003-R */
 %token<lexer.keyword> DIAGNOSTICS_SYM 390       /* SQL-2003-N */
 %token<lexer.keyword> DIRECTORY_SYM 391
@@ -835,7 +835,7 @@ void warn_about_deprecated_binary(THD *thd)
 %token<lexer.keyword> LIST_SYM 535
 %token  LOAD 536
 %token<lexer.keyword> LOCAL_SYM 537             /* SQL-2003-R */
-%token  OBSOLETE_TOKEN_538 538            /* was: LOCATOR_SYM */
+/*%token  OBSOLETE_TOKEN_538 538             was: LOCATOR_SYM */
 %token<lexer.keyword> LOCKS_SYM 539
 %token  LOCK_SYM 540
 %token<lexer.keyword> LOGFILE_SYM 541
@@ -951,7 +951,7 @@ void warn_about_deprecated_binary(THD *thd)
 %token<lexer.keyword> PAGE_SYM 651
 %token  PARAM_MARKER 652
 %token<lexer.keyword> PARSER_SYM 653
-%token  OBSOLETE_TOKEN_654 654            /* was: PARSE_GCOL_EXPR_SYM */
+/*%token  OBSOLETE_TOKEN_654 654             was: PARSE_GCOL_EXPR_SYM */
 %token<lexer.keyword> PARTIAL 655                       /* SQL-2003-N */
 %token  PARTITION_SYM 656                 /* SQL-2003-R */
 %token<lexer.keyword> PARTITIONS_SYM 657
@@ -990,7 +990,7 @@ void warn_about_deprecated_binary(THD *thd)
 %token  REAL_SYM 690                      /* SQL-2003-R */
 %token<lexer.keyword> REBUILD_SYM 691
 %token<lexer.keyword> RECOVER_SYM 692
-%token  OBSOLETE_TOKEN_693 693            /* was: REDOFILE_SYM */
+/*%token  OBSOLETE_TOKEN_693 693             was: REDOFILE_SYM */
 %token<lexer.keyword> REDO_BUFFER_SIZE_SYM 694
 %token<lexer.keyword> REDUNDANT_SYM 695
 %token  REFERENCES 696                    /* SQL-2003-R */
@@ -1052,7 +1052,7 @@ void warn_about_deprecated_binary(THD *thd)
 %token<lexer.keyword> SERIAL_SYM 752
 %token<lexer.keyword> SESSION_SYM 753           /* SQL-2003-N */
 %token<lexer.keyword> SERVER_SYM 754
-%token  OBSOLETE_TOKEN_755 755            /* was: SERVER_OPTIONS */
+/*%token  OBSOLETE_TOKEN_755 755            was: SERVER_OPTIONS */
 %token  SET_SYM 756                       /* SQL-2003-R */
 %token  SET_VAR 757
 %token<lexer.keyword> SHARE_SYM 758
@@ -1081,7 +1081,7 @@ void warn_about_deprecated_binary(THD *thd)
 %token<lexer.keyword> SQL_BEFORE_GTIDS 781      /* MYSQL */
 %token  SQL_BIG_RESULT 782
 %token<lexer.keyword> SQL_BUFFER_RESULT 783
-%token  OBSOLETE_TOKEN_784 784            /* was: SQL_CACHE_SYM */
+/*%token  OBSOLETE_TOKEN_784 784            was: SQL_CACHE_SYM */
 %token  SQL_CALC_FOUND_ROWS 785
 %token<lexer.keyword> SQL_NO_CACHE_SYM 786
 %token  SQL_SMALL_RESULT 787
@@ -1117,7 +1117,7 @@ void warn_about_deprecated_binary(THD *thd)
 %token  SYSDATE 817
 %token<lexer.keyword> TABLES 818
 %token<lexer.keyword> TABLESPACE_SYM 819
-%token  OBSOLETE_TOKEN_820 820            /* was: TABLE_REF_PRIORITY */
+/*%token  OBSOLETE_TOKEN_820 820             was: TABLE_REF_PRIORITY */
 %token  TABLE_SYM 821                     /* SQL-2003-R */
 %token<lexer.keyword> TABLE_CHECKSUM_SYM 822
 %token<lexer.keyword> TABLE_NAME_SYM 823        /* SQL-2003-N */
@@ -1145,7 +1145,7 @@ void warn_about_deprecated_binary(THD *thd)
 %token<lexer.keyword> TRUNCATE_SYM 845
 %token<lexer.keyword> TYPES_SYM 846
 %token<lexer.keyword> TYPE_SYM 847              /* SQL-2003-N */
-%token  OBSOLETE_TOKEN_848 848            /* was:  UDF_RETURNS_SYM */
+/*%token  OBSOLETE_TOKEN_848 848            was:  UDF_RETURNS_SYM */
 %token  ULONGLONG_NUM 849
 %token<lexer.keyword> UNCOMMITTED_SYM 850       /* SQL-2003-N */
 %token<lexer.keyword> UNDEFINED_SYM 851
@@ -1190,7 +1190,7 @@ void warn_about_deprecated_binary(THD *thd)
 %token  WHERE 890                         /* SQL-2003-R */
 %token  WHILE_SYM 891
 %token  WITH 892                          /* SQL-2003-R */
-%token  OBSOLETE_TOKEN_893 893            /* was: WITH_CUBE_SYM */
+/*%token  OBSOLETE_TOKEN_893 893            /* was: WITH_CUBE_SYM */
 %token  WITH_ROLLUP_SYM 894               /* INTERNAL */
 %token<lexer.keyword> WITHOUT_SYM 895           /* SQL-2003-R */
 %token<lexer.keyword> WORK_SYM 896              /* SQL-2003-N */
@@ -1231,7 +1231,7 @@ void warn_about_deprecated_binary(THD *thd)
 %token<lexer.keyword> PERSIST_ONLY_SYM 927      /* MYSQL */
 %token<lexer.keyword> HISTOGRAM_SYM 928         /* MYSQL */
 %token<lexer.keyword> BUCKETS_SYM 929           /* MYSQL */
-%token<lexer.keyword> OBSOLETE_TOKEN_930 930    /* was: REMOTE_SYM */
+/*%token<lexer.keyword> OBSOLETE_TOKEN_930 930     was: REMOTE_SYM */
 %token<lexer.keyword> CLONE_SYM 931             /* MYSQL */
 %token  CUME_DIST_SYM 932                 /* SQL-2003-R */
 %token  DENSE_RANK_SYM 933                /* SQL-2003-R */
@@ -1367,6 +1367,12 @@ void warn_about_deprecated_binary(THD *thd)
 %token<lexer.keyword> CHALLENGE_RESPONSE_SYM     1198      /* MYSQL */
 
 %token<lexer.keyword> GTID_ONLY_SYM 1199                       /* MYSQL */
+
+/*add token start*/
+// %token<lexer.keyword> START_SYM 784
+%token<lexer.keyword> ABAC_SYM 820
+%token<lexer.keyword> POLICY_SYM 930
+/*add token end*/
 
 /*
   Precedence rules used to resolve the ambiguity when using keywords as idents
@@ -1909,6 +1915,9 @@ void warn_about_deprecated_binary(THD *thd)
         simple_statement
         truncate_stmt
         update_stmt
+        start_abac_stmt
+        shutdown_abac_stmt
+        flush_policy_stmt
 
 %type <table_ident> table_ident_opt_wild
 
@@ -2411,6 +2420,9 @@ simple_statement:
         | update_stmt
         | use                           { $$= nullptr; }
         | xa                            { $$= nullptr; }
+        | start_abac_stmt
+        | shutdown_abac_stmt
+        | flush_policy_stmt
         ;
 
 deallocate:
@@ -18093,7 +18105,31 @@ json_attribute:
             }
             $$ = to_lex_cstring($1);
           }
+          ;
 
+/*add stmt start*/
+start_abac_stmt:
+          START_SYM ABAC_SYM
+          {
+            LEX* lex = Lex;
+            lex->sql_command = SQLCOM_START_ABAC;
+          }
+          ;
+shutdown_abac_stmt:
+          SHUTDOWN ABAC_SYM
+          {
+            LEX* lex = Lex;
+            lex->sql_command = SQLCOM_SHUTDOWN_ABAC;
+          }
+          ;
+
+flush_policy_stmt:
+          FLUSH_SYM POLICY_SYM
+          {
+            LEX *lex=Lex;
+            lex->sql_command= SQLCOM_FLUSH_POLICY;
+          }
+/*add stmt end*/
 /**
   @} (end of group Parser)
 */

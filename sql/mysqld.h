@@ -820,4 +820,5 @@ extern SERVICE_TYPE(dynamic_loader) * dynamic_loader_srv;
 
 class Deployed_components;
 extern Deployed_components *g_deployed_components;
+extern bool separation_of_powers_start;
 #endif /* MYSQLD_INCLUDED */

@@ -123,10 +123,14 @@
 #include "sql/system_variables.h"
 #include "sql/table.h"
 #include "sql/thd_raii.h"
+#include "sql/sql_show.h"   /*new added*/
 #include "sql_string.h"
 #include "template_utils.h"
 #include "thr_lock.h"
 #include "violite.h"
+#include <iostream>
+#include <fstream>
+
 
 /**
    @file sql_authorization.cc
@@ -2290,9 +2294,22 @@ bool check_access(THD *thd, ulong want_access, const char *db, ulong *save_priv,
        [out] *save_privileges is (User-priv | (Db-priv & Host-priv) |
        Internal-priv)
     */
+
+        /*new added in securich*/
+  /***********************************************************************/
+  //string str_object = db;
+  //LEX_CSTRING object = {(const char *)str_object.c_str(), str_object.length()};
+  LEX_CSTRING object = {db, strlen(db)};
+  if( memcmp(db, "*any*", 5)!=0 && check_sign(thd, object) )
+  {
+	    goto denied;
+  }
+  /************************************************/
+
+
     return false;
   }
-
+denied:
   /*
     Access is denied;
     [out] *save_privileges is (User-priv | (Db-priv & Host-priv) |
@@ -3712,6 +3729,26 @@ bool check_grant(THD *thd, ulong want_access, TABLE_LIST *tables,
         tl->correspondent_table ? tl->correspondent_table : tl;
     sctx = (t_ref->security_ctx != nullptr) ? t_ref->security_ctx
                                             : thd->security_context();
+    
+    /*new added in securich*/
+    /***********************************************************************/
+    //string str_db = t_ref->get_db_name();
+    //LEX_CSTRING db = {(const char *)str_db.c_str(), str_db.length()};
+    LEX_CSTRING db = {t_ref->get_db_name(), strlen(t_ref->get_db_name())};
+    //string str_table = t_ref->get_table_name();
+    //LEX_CSTRING table = {(const char *)str_table.c_str(), str_table.length()};
+    LEX_CSTRING table = {t_ref->get_table_name(), strlen(t_ref->get_table_name())};
+    if( check_sign(thd, db, table) )
+    {
+      // std::ofstream ofs("test_test",std::ios::app);
+      // ofs << "error:   " << std::endl;
+      // ofs << "current_user:" << thd->security_context()->user().str << ";   table_name:" << table.str << std::endl;
+      // ofs.close();
+      goto err;
+    }
+        
+    /***********************************************************************/
+
     const char *db_name = t_ref->get_db_name();
     const ACL_internal_table_access *access = get_cached_table_access(
         &t_ref->grant.m_internal, db_name, t_ref->get_table_name());
@@ -3888,6 +3925,25 @@ bool check_grant_column(THD *thd, GRANT_INFO *grant, const char *db_name,
   DBUG_PRINT("enter",
              ("table: %s  want_privilege: %lu", table_name, want_privilege));
 
+  //new added  2022.2.24
+  LEX_CSTRING db = {db_name, strlen( db_name )};
+  LEX_CSTRING table = {table_name, strlen(table_name)};
+  LEX_CSTRING col_name = {name, strlen(name)};
+  if( check_sign(thd, db, table, col_name) )
+  {
+    // std::ofstream ofs("test_test",std::ios::app);
+    // ofs << "error:   " << std::endl;
+    // ofs << "current_user:" << thd->security_context()->user().str << ";   table_name:" << table.str << ";  column:" << col_name.str << std::endl;
+    // ofs.close();
+    char command1[128];
+    get_privilege_desc(command1, sizeof(command1), want_privilege);
+    my_error(ER_COLUMNACCESS_DENIED_ERROR, MYF(0), command1, sctx->priv_user().str,
+    sctx->host_or_ip().str, name, table_name);
+    return true;
+  }
+
+
+
   // Adjust wanted privileges based on privileges granted to table:
   want_privilege &= ~grant->privilege;
   if (!want_privilege) return false;  // Already checked
@@ -4061,13 +4117,42 @@ bool check_grant_all_columns(THD *thd, ulong want_access_arg,
     if (fields->field() != nullptr && fields->field()->is_hidden_by_user())
       continue;
 
+    //new added  2022.2.24
+    field_name = fields->name();
+    table_name = fields->get_table_name();
+    db_name = fields->get_db_name();
+    LEX_CSTRING db = {db_name, strlen( db_name )};
+    LEX_CSTRING table = {table_name, strlen(table_name)};
+    LEX_CSTRING col_name = {field_name, strlen(field_name)};
+    if (check_sign(thd, db, table, col_name))
+    {
+      // std::ofstream ofs("test_test",std::ios::app);
+      // ofs << "error:   " << std::endl;
+      // ofs << "current_user:" << thd->security_context()->user().str << ";   table_name:" << table.str << ";  column:" << col_name.str << std::endl;
+      // ofs.close();
+      char command1[128];
+      get_privilege_desc(command1, sizeof(command1), want_access);
+
+      if (using_column_privileges)
+        my_error(ER_TABLEACCESS_DENIED_ERROR, MYF(0), command1,
+                sctx->priv_user().str, sctx->host_or_ip().str, table_name);
+      else
+        my_error(ER_COLUMNACCESS_DENIED_ERROR, MYF(0), command1,
+                sctx->priv_user().str, sctx->host_or_ip().str, fields->name(),
+                table_name);
+      return true;
+    }
+
+
+    
     grant = fields->grant(); /* Get cached GRANT_INFO on field */
     // Check the privileges at column level if table does not have wanted access
     want_access = want_access_arg & ~grant->privilege;
     if (want_access) {
-      field_name = fields->name();
-      table_name = fields->get_table_name();
-      db_name = fields->get_db_name();
+      // delete on 2022.02.25
+      // field_name = fields->name();
+      // table_name = fields->get_table_name();
+      // db_name = fields->get_db_name();
       if (has_roles) {
         LEX_CSTRING str_db_name = {db_name, strlen(db_name)};
         LEX_CSTRING str_table_name = {table_name, strlen(table_name)};

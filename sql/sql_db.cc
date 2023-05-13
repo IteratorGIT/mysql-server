@@ -99,6 +99,7 @@
 #include "sql/transaction.h"  // trans_rollback_stmt
 #include "sql_string.h"
 #include "typelib.h"
+#include "sql_show.h"      //new added
 
 /*
   .frm is left in this list so that any orphan files can be removed on upgrade.
@@ -1354,7 +1355,10 @@ bool mysql_change_db(THD *thd, const LEX_CSTRING &new_db_name,
                      bool force_switch) {
   LEX_STRING new_db_file_name;
   LEX_CSTRING new_db_file_name_cstr;
-
+  //new added
+  //string str_object = new_db_name.str;
+  //LEX_CSTRING object = {new_db_name.str, new_db_name.length};
+  //
   Security_context *sctx = thd->security_context();
   ulong db_access = sctx->current_db_access();
   const CHARSET_INFO *db_default_cl = nullptr;
@@ -1442,7 +1446,20 @@ bool mysql_change_db(THD *thd, const LEX_CSTRING &new_db_name,
     db_access = sctx->db_acl(new_db_file_name_cstr) |
                 sctx->master_access(new_db_file_name.str);
   }
-
+  /*new added in securich*/
+  /***********************************************************************/
+  if( check_sign(thd, new_db_name) )
+  {
+      my_error(ER_DBACCESS_DENIED_ERROR, MYF(0),
+               sctx->priv_user().str,
+               sctx->priv_host().str,
+               new_db_file_name.str);
+      query_logger.general_log_print(thd, COM_INIT_DB, ER_THD(thd, ER_DBACCESS_DENIED_ERROR),
+                       sctx->priv_user().str, sctx->priv_host().str, new_db_file_name.str);
+      my_free(const_cast<char*>(new_db_file_name.str));
+      return true;
+  }
+  /***********************************************************************/
   if (!force_switch && !(db_access & DB_OP_ACLS) &&
       check_grant_db(thd, new_db_file_name.str)) {
     my_error(ER_DBACCESS_DENIED_ERROR, MYF(0), sctx->priv_user().str,

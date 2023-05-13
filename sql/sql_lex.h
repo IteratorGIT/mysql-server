@@ -3933,6 +3933,7 @@ struct LEX : public Query_tables_list {
   bool prepared_stmt_code_is_varref;
   /* Names of user variables holding parameters (in EXECUTE) */
   List<LEX_STRING> prepared_stmt_params;
+  List<LEX_STRING> view_list;
   sp_head *sphead;
   sp_name *spname;
   bool sp_lex_in_use; /* Keep track on lex usage in SPs for error handling */
