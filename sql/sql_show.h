@@ -31,6 +31,7 @@
 #include "mysql/status_var.h"
 #include "sql/sql_select.h"
 #include "typelib.h"
+#include "sql_sign_manage.h"
 
 /* Forward declarations */
 class Item;

@@ -627,6 +627,9 @@ SET(SQL_SHARED_SOURCES
   window_iterators.cc
   xa.cc
   daemon_proxy_keyring/daemon_proxy_keyring.cc
+  #added in securich
+  link_sec.cc tree_sec.cc sec_sign.cc
+  sql_sign_manage.cc policy.cc SyntaxParseAnalysis.cc
   )
 
 IF(BUILD_IS_SINGLE_CONFIG)
@@ -1336,3 +1339,6 @@ ADD_CUSTOM_TARGET(distclean
 ADD_CUSTOM_TARGET(show-dist-name
   COMMAND ${CMAKE_COMMAND} -E echo "${CPACK_PACKAGE_FILE_NAME}"
 )
+
+set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -Wno-error")
+set(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -Wno-error")

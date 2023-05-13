@@ -61,6 +61,9 @@ static const SYMBOL symbols[] = {
     /*
      Insert new SQL keywords after that commentary (by alphabetical order):
     */
+    {SYM("ABAC", ABAC_SYM)},
+    {SYM("POLICY", POLICY_SYM)},
+
     {SYM("&&", AND_AND_SYM)},
     {SYM("<", LT)},
     {SYM("<=", LE)},
@@ -910,6 +913,7 @@ static const SYMBOL symbols[] = {
     {SYM_H("NO_ORDER_INDEX", NO_ORDER_INDEX_HINT)},
     {SYM_H("DERIVED_CONDITION_PUSHDOWN", DERIVED_CONDITION_PUSHDOWN_HINT)},
     {SYM_H("NO_DERIVED_CONDITION_PUSHDOWN",
-           NO_DERIVED_CONDITION_PUSHDOWN_HINT)}};
+           NO_DERIVED_CONDITION_PUSHDOWN_HINT)}
+    };
 
 #endif /* LEX_INCLUDED */
