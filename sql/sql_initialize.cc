@@ -54,8 +54,22 @@ static const char *initialization_cmds[] = {"USE mysql;\n", nullptr};
 #define INSERT_USER_CMD_INSECURE "CREATE USER root@localhost;\n"
 #define GENERATED_PASSWORD_LENGTH 12
 
+#define INSERT_USER_SUPERVISOR_CMD \
+  "CREATE USER supervisor@'%' IDENTIFIED BY '%s' PASSWORD EXPIRE;\n"
+#define INSERT_USER_ADMIN_CMD \
+  "CREATE USER admin@'%' IDENTIFIED BY '%s' PASSWORD EXPIRE;\n"
+#define INSERT_USER_AUDITOR_CMD \
+  "CREATE USER auditor@'%' IDENTIFIED BY '%s' PASSWORD EXPIRE;\n"
+
 char
     insert_user_buffer[sizeof(INSERT_USER_CMD) + GENERATED_PASSWORD_LENGTH * 2];
+
+char
+    insert_user_supervisor_buffer[sizeof(INSERT_USER_SUPERVISOR_CMD) + GENERATED_PASSWORD_LENGTH * 2];
+char
+    insert_user_admin_buffer[sizeof(INSERT_USER_ADMIN_CMD) + GENERATED_PASSWORD_LENGTH * 2];
+char
+    insert_user_auditor_buffer[sizeof(INSERT_USER_AUDITOR_CMD) + GENERATED_PASSWORD_LENGTH * 2];
 
 bool opt_initialize_insecure = false;
 /** True if --initialize has actually created the directory */
@@ -64,7 +78,25 @@ bool mysql_initialize_directory_freshly_created = false;
 static const char *initialization_data[] = {
     "FLUSH PRIVILEGES", insert_user_buffer,
     "GRANT ALL PRIVILEGES ON *.* TO root@localhost WITH GRANT OPTION;\n",
-    "GRANT PROXY ON ''@'' TO 'root'@'localhost' WITH GRANT OPTION;\n", nullptr};
+    "GRANT PROXY ON ''@'' TO 'root'@'localhost' WITH GRANT OPTION;\n",
+    insert_user_supervisor_buffer, 
+    "GRANT GRANT OPTION ON *.* TO 'supervisor'@'%';\n",
+    "GRANT USAGE ON mysql.* TO 'supervisor'@'%';\n",
+    "GRANT ALL PRIVILEGES ON mysql.abac_level_sec TO 'supervisor'@'%';\n",
+    "GRANT ALL PRIVILEGES ON mysql.abac_domain_sec TO 'supervisor'@'%';\n",
+    "GRANT ALL PRIVILEGES ON mysql.abac_domain_sec_poset TO 'supervisor'@'%';\n",
+    "GRANT ALL PRIVILEGES ON mysql.abac_level_sec_poset TO 'supervisor'@'%';\n",
+    "GRANT ALL PRIVILEGES ON mysql.abac_attributes TO 'supervisor'@'%';\n",
+    "GRANT ALL PRIVILEGES ON mysql.abac_attribute_manager TO 'supervisor'@'%';\n",
+    "GRANT ALL PRIVILEGES ON mysql.abac_policies TO 'supervisor'@'%';\n",
+    insert_user_admin_buffer,
+    "GRANT ALL PRIVILEGES ON *.* TO 'admin'@'%' WITH GRANT OPTION;\n",
+    insert_user_auditor_buffer,
+    "GRANT GRANT OPTION ON *.* TO 'auditor'@'%';\n",
+    "GRANT USAGE ON mysql.* TO 'auditor'@'%';\n",
+    "GRANT ALL PRIVILEGES ON audit_log.* TO 'auditor'@'%';\n",
+    "GRANT ALL PRIVILEGES ON mysql.general_log TO 'auditor'@'%';\n",
+    nullptr};
 
 static const char **cmds[] = {initialization_cmds, mysql_system_tables,
                               initialization_data, mysql_system_data,
@@ -164,6 +196,60 @@ bool Compiled_in_command_iterator::begin(void) {
                             GENERATED_PASSWORD_LENGTH);
 
     sprintf(insert_user_buffer, INSERT_USER_CMD, escaped_password);
+
+    //supervisor@%
+    if (generate_password(password, GENERATED_PASSWORD_LENGTH)) {
+      LogErr(ERROR_LEVEL, ER_INIT_FAILED_TO_GENERATE_SUPERVISOR_PASSWORD);
+      return true;
+    }
+    password[GENERATED_PASSWORD_LENGTH] = 0;
+    log_builtins_filter_update_verbosity((log_error_verbosity = 3));
+    LogErr(INFORMATION_LEVEL, ER_INIT_GENERATING_TEMP_PASSWORD_FOR_SUPERVISOR,
+           password);
+    log_builtins_filter_update_verbosity(
+        (log_error_verbosity = saved_verbosity));
+
+    escape_string_for_mysql(&my_charset_bin, escaped_password,
+                            sizeof(escaped_password), password,
+                            GENERATED_PASSWORD_LENGTH);
+    sprintf(insert_user_supervisor_buffer, INSERT_USER_SUPERVISOR_CMD, escaped_password);
+
+    //admin@%
+    if (generate_password(password, GENERATED_PASSWORD_LENGTH)) {
+      LogErr(ERROR_LEVEL, ER_INIT_FAILED_TO_GENERATE_ADMIN_PASSWORD);
+      return true;
+    }
+    password[GENERATED_PASSWORD_LENGTH] = 0;
+    log_builtins_filter_update_verbosity((log_error_verbosity = 3));
+    LogErr(INFORMATION_LEVEL, ER_INIT_GENERATING_TEMP_PASSWORD_FOR_ADMIN,
+           password);
+    log_builtins_filter_update_verbosity(
+        (log_error_verbosity = saved_verbosity));
+
+    escape_string_for_mysql(&my_charset_bin, escaped_password,
+                            sizeof(escaped_password), password,
+                            GENERATED_PASSWORD_LENGTH);
+    sprintf(insert_user_admin_buffer, INSERT_USER_ADMIN_CMD, escaped_password);
+
+    //auditor@%
+    if (generate_password(password, GENERATED_PASSWORD_LENGTH)) {
+      LogErr(ERROR_LEVEL, ER_INIT_FAILED_TO_GENERATE_AUDITOR_PASSWORD);
+      return true;
+    }
+    password[GENERATED_PASSWORD_LENGTH] = 0;
+    log_builtins_filter_update_verbosity((log_error_verbosity = 3));
+    LogErr(INFORMATION_LEVEL, ER_INIT_GENERATING_TEMP_PASSWORD_FOR_AUDITOR,
+           password);
+    log_builtins_filter_update_verbosity(
+        (log_error_verbosity = saved_verbosity));
+
+    escape_string_for_mysql(&my_charset_bin, escaped_password,
+                            sizeof(escaped_password), password,
+                            GENERATED_PASSWORD_LENGTH);
+    sprintf(insert_user_auditor_buffer, INSERT_USER_AUDITOR_CMD, escaped_password);
+
+
+
   }
 
   return false;
