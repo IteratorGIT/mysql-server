@@ -2211,7 +2211,7 @@ bool check_abac_access_alter(THD *thd, List<LEX_USER> &list)
             strcmp(user->user.str, "root")==0 && strcmp(user->host.str,"localhost")==0 && sub != "root@localhost")
             {
                 if(super) return false;
-                my_error(ER_SPECIFIC_ACCESS_DENIED_ERROR, MYF(0), "root");
+                my_error(ER_SEPARATION_OF_POWERS_DENIED_ERROR, MYF(0));
                 return true;
             }
     }
@@ -2244,7 +2244,7 @@ bool check_abac_access(THD *thd, List<LEX_USER> &list)
             strcmp(user->user.str, "admin")==0 && strcmp(user->host.str,"%")==0 )
             {
                 if(super) return false;
-                my_error(ER_SPECIFIC_ACCESS_DENIED_ERROR, MYF(0), "root");
+                my_error(ER_SEPARATION_OF_POWERS_DENIED_ERROR, MYF(0));
                 return true;
             }
     }

@@ -52,23 +52,23 @@ GRANT SELECT ON *.* TO 'mysql.infoschema'@localhost;
 GRANT SYSTEM_USER ON *.* TO 'mysql.infoschema'@localhost;
 
 -- new: separation of powers
-create user admin@'%' identified by '123456';
-grant grant option on *.* to 'admin'@'%';
-grant all privileges on *.* to 'admin'@'%';
+-- CREATE USER admin @'%' IDENTIFIED BY '123456';
+-- GRANT GRANT OPTION ON *.* TO 'admin' @'%';
+-- GRANT ALL PRIVILEGES ON *.* TO 'admin' @'%';
 
-create user supervisor@'%' identified by '123456';
-grant grant option on *.* to 'supervisor'@'%';
-grant usage on mysql.* to 'supervisor'@'%';
-grant all privileges on mysql.abac_level_sec to 'supervisor'@'%';
-grant all privileges on mysql.abac_domain_sec to 'supervisor'@'%';
-grant all privileges on mysql.abac_domain_sec_poset to 'supervisor'@'%';
-grant all privileges on mysql.abac_level_sec_poset to 'supervisor'@'%';
-grant all privileges on mysql.abac_attributes to 'supervisor'@'%';
-grant all privileges on mysql.abac_attribute_manager to 'supervisor'@'%';
-grant all privileges on mysql.abac_policies to 'supervisor'@'%';
+-- CREATE USER supervisor @'%' IDENTIFIED BY '123456';
+-- GRANT GRANT OPTION ON *.* TO 'supervisor' @'%';
+-- GRANT USAGE ON mysql.* TO 'supervisor' @'%';
+-- GRANT ALL PRIVILEGES ON mysql.abac_level_sec TO 'supervisor' @'%';
+-- GRANT ALL PRIVILEGES ON mysql.abac_domain_sec TO 'supervisor' @'%';
+-- GRANT ALL PRIVILEGES ON mysql.abac_domain_sec_poset TO 'supervisor' @'%';
+-- GRANT ALL PRIVILEGES ON mysql.abac_level_sec_poset TO 'supervisor' @'%';
+-- GRANT ALL PRIVILEGES ON mysql.abac_attributes TO 'supervisor' @'%';
+-- GRANT ALL PRIVILEGES ON mysql.abac_attribute_manager TO 'supervisor' @'%';
+-- GRANT ALL PRIVILEGES ON mysql.abac_policies TO 'supervisor' @'%';
 
-create user auditor@'%' identified by '123456';
-grant grant option on *.* to 'auditor'@'%';
-grant usage on mysql.* to 'auditor'@'%';
-grant all privileges on audit_log.* to 'auditor'@'%';
-grant all privileges on mysql.general_log to 'auditor'@'%';
+-- CREATE USER auditor @'%' IDENTIFIED BY '123456';
+-- GRANT GRANT OPTION ON *.* TO 'auditor' @'%';
+-- GRANT USAGE ON mysql.* TO 'auditor' @'%';
+-- GRANT ALL PRIVILEGES ON audit_log.* TO 'auditor' @'%';
+-- GRANT ALL PRIVILEGES ON mysql.general_log TO 'auditor' @'%';

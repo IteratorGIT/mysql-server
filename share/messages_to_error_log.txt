@@ -11557,6 +11557,20 @@ ER_MFA_USER_ATTRIBUTES_CORRUPT
 ER_MFA_PLUGIN_NOT_LOADED
   eng "Plugin \'%-.192s\' is not loaded; Ignoring user"
 
+ER_INIT_GENERATING_TEMP_PASSWORD_FOR_SUPERVISOR
+  eng "A temporary password is generated for supervisor@%: %s"
+ER_INIT_GENERATING_TEMP_PASSWORD_FOR_ADMIN
+  eng "A temporary password is generated for admin@%: %s"
+ER_INIT_GENERATING_TEMP_PASSWORD_FOR_AUDITOR
+  eng "A temporary password is generated for auditor@%: %s"
+
+ER_INIT_FAILED_TO_GENERATE_SUPERVISOR_PASSWORD
+  eng "Failed to generate a random password for supervisor. Probabably not enough enthropy."
+ER_INIT_FAILED_TO_GENERATE_ADMIN_PASSWORD
+  eng "Failed to generate a random password for admin. Probabably not enough enthropy."
+ER_INIT_FAILED_TO_GENERATE_AUDITOR_PASSWORD
+  eng "Failed to generate a random password for auditor. Probabably not enough enthropy."
+
 # DO NOT add server-to-client messages here;
 # they go in messages_to_clients.txt
 # in the same directory as this file.
