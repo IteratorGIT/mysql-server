@@ -760,3 +760,4 @@ utilities/cmake_install.cmake
 vio/CTestTestfile.cmake
 vio/Makefile
 vio/cmake_install.cmake
+mysql-test/var/

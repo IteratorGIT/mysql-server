@@ -56,10 +56,13 @@ static const char *initialization_cmds[] = {"USE mysql;\n", nullptr};
 
 #define INSERT_USER_SUPERVISOR_CMD \
   "CREATE USER supervisor@'%' IDENTIFIED BY '%s' PASSWORD EXPIRE;\n"
+#define INSERT_USER_SUPERVISOR_CMD_INSECURE "CREATE USER supervisor@'%';\n"
 #define INSERT_USER_ADMIN_CMD \
   "CREATE USER admin@'%' IDENTIFIED BY '%s' PASSWORD EXPIRE;\n"
+#define INSERT_USER_ADMIN_CMD_INSECURE "CREATE USER admin@'%';\n"
 #define INSERT_USER_AUDITOR_CMD \
   "CREATE USER auditor@'%' IDENTIFIED BY '%s' PASSWORD EXPIRE;\n"
+#define INSERT_USER_AUDITOR_CMD_INSECURE "CREATE USER auditor@'%';\n"
 
 char
     insert_user_buffer[sizeof(INSERT_USER_CMD) + GENERATED_PASSWORD_LENGTH * 2];
@@ -170,6 +173,15 @@ bool Compiled_in_command_iterator::begin(void) {
   if (opt_initialize_insecure) {
     strcpy(insert_user_buffer, INSERT_USER_CMD_INSECURE);
     LogErr(WARNING_LEVEL, ER_INIT_ROOT_WITHOUT_PASSWORD);
+
+    //separation of powers:supervisor/admin/auditor
+    strcpy(insert_user_supervisor_buffer, INSERT_USER_SUPERVISOR_CMD_INSECURE);
+    LogErr(WARNING_LEVEL, ER_INIT_SUPERVISOR_WITHOUT_PASSWORD);
+    strcpy(insert_user_admin_buffer, INSERT_USER_ADMIN_CMD_INSECURE);
+    LogErr(WARNING_LEVEL, ER_INIT_ADMIN_WITHOUT_PASSWORD);
+    strcpy(insert_user_auditor_buffer, INSERT_USER_AUDITOR_CMD_INSECURE);
+    LogErr(WARNING_LEVEL, ER_INIT_AUDITOR_WITHOUT_PASSWORD);
+
   } else {
     char password[GENERATED_PASSWORD_LENGTH + 1];
     char escaped_password[GENERATED_PASSWORD_LENGTH * 2 + 1];

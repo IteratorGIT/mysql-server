@@ -11571,6 +11571,14 @@ ER_INIT_FAILED_TO_GENERATE_ADMIN_PASSWORD
 ER_INIT_FAILED_TO_GENERATE_AUDITOR_PASSWORD
   eng "Failed to generate a random password for auditor. Probabably not enough enthropy."
 
+ER_INIT_SUPERVISOR_WITHOUT_PASSWORD
+  eng "supervisor@'%%' is created with an empty password ! Please consider switching off the --initialize-insecure option."
+ER_INIT_ADMIN_WITHOUT_PASSWORD
+  eng "admin@'%%' is created with an empty password ! Please consider switching off the --initialize-insecure option."
+ER_INIT_AUDITOR_WITHOUT_PASSWORD
+  eng "auditor@'%%' is created with an empty password ! Please consider switching off the --initialize-insecure option."
+
+
 # DO NOT add server-to-client messages here;
 # they go in messages_to_clients.txt
 # in the same directory as this file.
