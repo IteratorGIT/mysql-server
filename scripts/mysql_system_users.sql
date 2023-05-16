@@ -50,25 +50,3 @@ CREATE USER 'mysql.infoschema'@localhost IDENTIFIED WITH caching_sha2_password
 REVOKE ALL PRIVILEGES, GRANT OPTION FROM 'mysql.infoschema'@localhost;
 GRANT SELECT ON *.* TO 'mysql.infoschema'@localhost;
 GRANT SYSTEM_USER ON *.* TO 'mysql.infoschema'@localhost;
-
--- new: separation of powers
--- CREATE USER admin @'%' IDENTIFIED BY '123456';
--- GRANT GRANT OPTION ON *.* TO 'admin' @'%';
--- GRANT ALL PRIVILEGES ON *.* TO 'admin' @'%';
-
--- CREATE USER supervisor @'%' IDENTIFIED BY '123456';
--- GRANT GRANT OPTION ON *.* TO 'supervisor' @'%';
--- GRANT USAGE ON mysql.* TO 'supervisor' @'%';
--- GRANT ALL PRIVILEGES ON mysql.abac_level_sec TO 'supervisor' @'%';
--- GRANT ALL PRIVILEGES ON mysql.abac_domain_sec TO 'supervisor' @'%';
--- GRANT ALL PRIVILEGES ON mysql.abac_domain_sec_poset TO 'supervisor' @'%';
--- GRANT ALL PRIVILEGES ON mysql.abac_level_sec_poset TO 'supervisor' @'%';
--- GRANT ALL PRIVILEGES ON mysql.abac_attributes TO 'supervisor' @'%';
--- GRANT ALL PRIVILEGES ON mysql.abac_attribute_manager TO 'supervisor' @'%';
--- GRANT ALL PRIVILEGES ON mysql.abac_policies TO 'supervisor' @'%';
-
--- CREATE USER auditor @'%' IDENTIFIED BY '123456';
--- GRANT GRANT OPTION ON *.* TO 'auditor' @'%';
--- GRANT USAGE ON mysql.* TO 'auditor' @'%';
--- GRANT ALL PRIVILEGES ON audit_log.* TO 'auditor' @'%';
--- GRANT ALL PRIVILEGES ON mysql.general_log TO 'auditor' @'%';
