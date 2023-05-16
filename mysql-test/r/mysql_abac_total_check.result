@@ -1,0 +1,933 @@
+create user 'boss'@'%' identified by '123';
+create user 'zhangsan'@'%' identified by '123';
+create database company;
+use company;
+create table kejibu(  
+id varchar(10) primary key,  
+name varchar(20)
+);
+create table caiwubu(  
+id varchar(10) primary key,  
+name varchar(20)
+);
+create table kaifabu(  
+id varchar(10) primary key,  
+name varchar(20)
+);
+create table secret(  
+id varchar(10) primary key,  
+info varchar(20)
+);
+insert into kejibu values ('kj101','zhangsan');
+insert into kejibu values ('kj102','lisi');
+insert into kejibu values ('kj103','wangwu');
+insert into caiwubu values ('cw201','zhangsan');
+insert into caiwubu values ('cw202','lisi');
+insert into caiwubu values ('cw203','wangwu');
+insert into kaifabu values ('kf301','zhangsan');
+insert into kaifabu values ('kf302','lisi');
+insert into kaifabu values ('kf303','wangwu');
+insert into secret values ('m101','123456');
+grant all privileges on company.* to 'boss'@'%';
+update mysql.user set Show_db_priv='Y' where User='boss';
+grant all privileges on company.* to 'zhangsan'@'%';
+update mysql.user set Show_db_priv='Y' where User='zhangsan';
+flush privileges;
+show tables;
+Tables_in_company
+caiwubu
+kaifabu
+kejibu
+secret
+show tables;
+Tables_in_company
+caiwubu
+kaifabu
+kejibu
+secret
+start ABAC;
+create abac policy ('before_ABAC','zhangsan@%','company.kejibu','table', 8,'level',"'normal'",'>','AttValConstVal',28,null,'false');
+alter abac policy 'before_ABAC' enable;
+show abac policies;
+subject	object	obj_typ	operation	policy_name	policy_id	att_name	const_val	operator	tag	sub_att	obj_att	policy_enable
+any	any	any	0	default_level	1	level	NULL	>=	AttValAttval	NULL	NULL	1
+any	any	any	0	default_domain	2	domain	NULL	contain	AttValAttval	NULL	NULL	1
+any	mysql.user	table	8	default_user1	3	level	NULL	>	AttValAttval	NULL	NULL	1
+any	mysql.user	table	4	default_user2	4	level	NULL	>	AttValAttval	NULL	NULL	1
+any	mysql.user	table	2	default_user3	5	level	NULL	>	AttValAttval	NULL	NULL	1
+zhangsan@%	company.kejibu	table	8	before_abac	6	level	'normal'	>	AttValConstVal	28	NULL	1
+alter abac policy 'before_ABAC' disable;
+drop abac policy 'before_ABAC';
+create abac domain 'company';
+create abac domain 'kejibu';
+show abac domains;
+domain_name
+admin
+audit
+company
+kejibu
+mysql
+root
+sec
+create abac domain relation 'company' to 'root';
+create abac domain relation 'kejibu' to 'company';
+show abac domain relations;
+domain_h	domain_l	domain_relation_id
+root	mysql	1
+root	admin	2
+root	sec	3
+root	audit	4
+root	company	5
+company	kejibu	6
+grant abac domain 'company' to 'boss@%';
+grant abac domain 'company' to 'company';
+grant abac domain 'kejibu' to 'company.kejibu';
+show abac domain on 'boss@%';
+object	att_name	attribute_value	attribute_manager_id
+boss@%	domain	company	32
+show abac domain on 'company';
+object	att_name	attribute_value	attribute_manager_id
+company	domain	company	33
+show abac domain on 'company' in 'kejibu';
+object	att_name	attribute_value	attribute_manager_id
+company.kejibu	domain	kejibu	34
+revoke abac attribute ('domain', 'company') from 'boss@%';
+revoke abac attribute ('domain', 'company') from 'company';
+revoke abac attribute ('domain', 'kejibu') from 'company.kejibu';
+drop abac domain relation 'kejibu' from 'company';
+drop abac domain relation 'company' from 'root';
+drop abac domain 'kejibu';
+drop abac domain 'company';
+create abac level 'lowest';
+show abac levels;
+level_name
+high
+highest
+low
+lowest
+normal
+create abac level relation 'lowest' to 'low';
+show abac level relations;
+level_h	level_l	level_relation_id
+highest	high	1
+high	normal	2
+normal	low	3
+low	lowest	4
+grant abac level 'lowest' to 'company';
+grant abac level 'lowest' to 'company.kejibu';
+grant abac level 'low' to 'boss@%';
+show abac level on 'boss@%';
+object	att_name	attribute_value	attribute_manager_id
+boss@%	level	low	37
+show abac level on 'company';
+object	att_name	attribute_value	attribute_manager_id
+company	level	lowest	35
+show abac level on 'company' in 'kejibu';
+object	att_name	attribute_value	attribute_manager_id
+company.kejibu	level	lowest	36
+revoke abac attribute ('level', 'low') from 'boss@%';
+revoke abac attribute ('level', 'lowest') from 'company';
+revoke abac attribute ('level', 'lowest') from 'company.kejibu';
+drop abac level relation 'lowest' from 'low';
+drop abac level 'lowest';
+create abac attribute (9,'JobLevel','int');
+show abac attributes;
+id	att_name	type
+1	level	string
+2	domain	set
+3	ip	string
+4	time	string
+5	date	string
+6	weekday	string
+9	joblevel	int
+grant abac attribute ('JobLevel', '1') to 'boss@%';
+show abac attributes_manager;
+object	att_name	attribute_value	attribute_manager_id
+admin@%	domain	admin	22
+admin@%	domain	mysql	23
+admin@%	level	high	21
+auditor@%	domain	audit	28
+auditor@%	domain	mysql	29
+auditor@%	level	high	27
+audit_log	domain	audit	18
+audit_log	level	high	17
+boss@%	joblevel	1	38
+mysql	domain	mysql	2
+mysql	level	high	1
+mysql.abac_attributes	domain	sec	12
+mysql.abac_attributes	level	high	11
+mysql.abac_attribute_manager	domain	sec	14
+mysql.abac_attribute_manager	level	high	13
+mysql.abac_domain_sec	domain	sec	9
+mysql.abac_domain_sec	level	high	5
+mysql.abac_domain_sec_poset	domain	sec	10
+mysql.abac_domain_sec_poset	level	high	6
+mysql.abac_level_sec	domain	sec	7
+mysql.abac_level_sec	level	high	3
+mysql.abac_level_sec_poset	domain	sec	8
+mysql.abac_level_sec_poset	level	high	4
+mysql.abac_policies	domain	sec	16
+mysql.abac_policies	level	high	15
+mysql.general_log	domain	audit	20
+mysql.general_log	level	high	19
+root@localhost	domain	root	31
+root@localhost	level	highest	30
+supervisor@%	domain	mysql	26
+supervisor@%	domain	sec	25
+supervisor@%	level	highest	24
+revoke abac attribute ('JobLevel', '1') from 'boss@%';
+drop abac attribute 'JobLevel';
+create abac domain 'company';
+create abac domain 'company';
+ERROR 23000: Duplicate entry 'company' for key 'abac_domain_sec.PRIMARY'
+create abac domain 'caiwubu';
+create abac domain 'kaifabu';
+create abac domain 'kejibu';
+create abac domain relation 'company' to 'root';
+create abac domain relation 'company' to 'root';
+result
+fail
+create abac domain relation 'caiwubu' to 'company';
+create abac domain relation 'kaifabu' to 'company';
+create abac domain relation 'kejibu' to 'company';
+flush policy;
+create abac attribute (7,'JobLevel','int');
+create abac attribute (7,'JobLevel','int');
+ERROR 23000: Duplicate entry '7' for key 'abac_attributes.PRIMARY'
+create abac level 'lowest';
+create abac level 'lowest';
+ERROR 23000: Duplicate entry 'lowest' for key 'abac_level_sec.PRIMARY'
+create abac level relation 'lowest' to 'low';
+create abac level relation 'lowest' to 'low';
+result
+fail
+drop abac level relation 'lowest' from 'low';
+drop abac level relation 'lowest' from 'low';
+result
+fail
+drop abac level 'lowest';
+drop abac level 'lowest';
+grant abac level 'normal' to 'boss@%';
+grant abac attribute ('level', 'low') to 'zhangsan@%';
+grant abac attribute ('level', 'low') to 'zhangsan@%';
+ERROR 23000: Duplicate entry 'zhangsan@%-level-low' for key 'abac_attribute_manager.object'
+grant abac attribute ('level', 'low') to 'company';
+grant abac attribute ('level', 'low') to 'company.caiwubu';
+grant abac attribute ('level', 'low') to 'company.kaifabu';
+grant abac attribute ('level', 'low') to 'company.kejibu';
+grant abac attribute ('level', 'normal') to 'company.secret';
+grant abac domain 'company' to 'boss@%';
+grant abac attribute ('domain', 'kejibu') to 'zhangsan@%';
+grant abac attribute ('domain', 'caiwubu') to 'company.caiwubu';
+grant abac attribute ('domain', 'kaifabu') to 'company.kaifabu';
+grant abac attribute ('domain', 'kejibu') to 'company.kejibu';
+grant abac attribute ('domain', 'company') to 'company.secret';
+grant abac attribute ('JobLevel', '1') to 'boss@%';
+grant abac attribute ('JobLevel', '3') to 'zhangsan@%';
+flush policy;
+show abac domain relations;
+domain_h	domain_l	domain_relation_id
+root	mysql	1
+root	admin	2
+root	sec	3
+root	audit	4
+root	company	7
+company	caiwubu	8
+company	kaifabu	9
+company	kejibu	10
+show abac domains;
+domain_name
+admin
+audit
+caiwubu
+company
+kaifabu
+kejibu
+mysql
+root
+sec
+show abac domain on 'zhangsan@%';
+object	att_name	attribute_value	attribute_manager_id
+zhangsan@%	domain	kejibu	48
+show abac domain on 'company' in 'kejibu';
+object	att_name	attribute_value	attribute_manager_id
+company.kejibu	domain	kejibu	51
+show abac levels;
+level_name
+high
+highest
+low
+normal
+show abac level relations;
+level_h	level_l	level_relation_id
+highest	high	1
+high	normal	2
+normal	low	3
+show abac level on 'zhangsan@%';
+object	att_name	attribute_value	attribute_manager_id
+zhangsan@%	level	low	40
+show abac level on 'company' in 'kejibu';
+object	att_name	attribute_value	attribute_manager_id
+company.kejibu	level	low	45
+show abac policies;
+subject	object	obj_typ	operation	policy_name	policy_id	att_name	const_val	operator	tag	sub_att	obj_att	policy_enable
+any	any	any	0	default_level	1	level	NULL	>=	AttValAttval	NULL	NULL	1
+any	any	any	0	default_domain	2	domain	NULL	contain	AttValAttval	NULL	NULL	1
+any	mysql.user	table	8	default_user1	3	level	NULL	>	AttValAttval	NULL	NULL	1
+any	mysql.user	table	4	default_user2	4	level	NULL	>	AttValAttval	NULL	NULL	1
+any	mysql.user	table	2	default_user3	5	level	NULL	>	AttValAttval	NULL	NULL	1
+show abac attributes;
+id	att_name	type
+1	level	string
+2	domain	set
+3	ip	string
+4	time	string
+5	date	string
+6	weekday	string
+7	joblevel	int
+show abac attributes_manager;
+object	att_name	attribute_value	attribute_manager_id
+admin@%	domain	admin	22
+admin@%	domain	mysql	23
+admin@%	level	high	21
+auditor@%	domain	audit	28
+auditor@%	domain	mysql	29
+auditor@%	level	high	27
+audit_log	domain	audit	18
+audit_log	level	high	17
+boss@%	domain	company	47
+boss@%	joblevel	1	53
+boss@%	level	normal	39
+company	level	low	42
+company.caiwubu	domain	caiwubu	49
+company.caiwubu	level	low	43
+company.kaifabu	domain	kaifabu	50
+company.kaifabu	level	low	44
+company.kejibu	domain	kejibu	51
+company.kejibu	level	low	45
+company.secret	domain	company	52
+company.secret	level	normal	46
+mysql	domain	mysql	2
+mysql	level	high	1
+mysql.abac_attributes	domain	sec	12
+mysql.abac_attributes	level	high	11
+mysql.abac_attribute_manager	domain	sec	14
+mysql.abac_attribute_manager	level	high	13
+mysql.abac_domain_sec	domain	sec	9
+mysql.abac_domain_sec	level	high	5
+mysql.abac_domain_sec_poset	domain	sec	10
+mysql.abac_domain_sec_poset	level	high	6
+mysql.abac_level_sec	domain	sec	7
+mysql.abac_level_sec	level	high	3
+mysql.abac_level_sec_poset	domain	sec	8
+mysql.abac_level_sec_poset	level	high	4
+mysql.abac_policies	domain	sec	16
+mysql.abac_policies	level	high	15
+mysql.general_log	domain	audit	20
+mysql.general_log	level	high	19
+root@localhost	domain	root	31
+root@localhost	level	highest	30
+supervisor@%	domain	mysql	26
+supervisor@%	domain	sec	25
+supervisor@%	level	highest	24
+zhangsan@%	domain	kejibu	48
+zhangsan@%	joblevel	3	54
+zhangsan@%	level	low	40
+select policy_name,policy_id from abac_policies;
+policy_name	policy_id
+default_level	1
+default_domain	2
+default_user1	3
+default_user2	4
+default_user3	5
+show abac domain relations;
+result
+access denied
+show abac domains;
+result
+access denied
+show abac domain on 'zhangsan@%';
+ERROR 42000: Access denied for user 'zhangsan'@'%' to database 'mysql'
+show abac domain on 'company' in 'kejibu';
+ERROR 42000: Access denied for user 'zhangsan'@'%' to database 'mysql'
+show abac levels;
+result
+access denied
+Warnings:
+Error	1044	Access denied for user 'zhangsan'@'%' to database 'mysql'
+show abac level relations;
+result
+access denied
+show abac level on 'zhangsan@%';
+ERROR 42000: Access denied for user 'zhangsan'@'%' to database 'mysql'
+show abac level on 'company' in 'kejibu';
+ERROR 42000: Access denied for user 'zhangsan'@'%' to database 'mysql'
+show abac policies;
+ERROR 42000: Access denied for user 'zhangsan'@'%' to database 'mysql'
+show abac attributes;
+ERROR 42000: Access denied for user 'zhangsan'@'%' to database 'mysql'
+show abac attributes_manager;
+ERROR 42000: Access denied for user 'zhangsan'@'%' to database 'mysql'
+create abac domain 'company';
+ERROR 42000: Access denied for user 'zhangsan'@'%' to database 'mysql'
+create abac domain relation 'company' to 'root';
+result
+access denied
+Warnings:
+Error	1044	Access denied for user 'zhangsan'@'%' to database 'mysql'
+drop abac domain relation 'caiwubu' from 'company';
+result
+access denied
+drop abac domain 'company';
+ERROR 42000: Access denied for user 'zhangsan'@'%' to database 'mysql'
+create abac level 'lowest';
+ERROR 42000: Access denied for user 'zhangsan'@'%' to database 'mysql'
+create abac level relation 'lowest' to 'low';
+result
+access denied
+Warnings:
+Error	1044	Access denied for user 'zhangsan'@'%' to database 'mysql'
+drop abac level relation 'lowest' from 'low';
+result
+access denied
+drop abac level 'lowest';
+ERROR 42000: Access denied for user 'zhangsan'@'%' to database 'mysql'
+select * from kejibu;
+id	name
+kj101	zhangsan
+kj102	lisi
+kj103	wangwu
+select * from caiwubu;
+ERROR 42000: SELECT command denied to user 'zhangsan'@'localhost' for table 'caiwubu'
+create abac policy ('kejibu_delete','any','company.kejibu','table', 8,'level',"null",'>','AttValAttval',null,null,'true');
+flush policy;
+create abac policy ('kejibu_failed_delete','zhangsan@%','company.kejibu','table', 8,'level',"null",'<','AttValAttval',null,null,'true');
+result
+policy conflict with: kejibu_delete, please set this policy unenable.
+create abac policy ('zhangsan_kaifabu','zhangsan@%','company.kaifabu','table', 0,'JobLevel',"3",'<','AttValConstVal',42,null,'false');
+alter abac policy 'zhangsan_kaifabu' enable;
+create abac policy ('boss_secret','boss@%','company.secret','table', 8,'level',"'normal'",'>','AttValConstVal',28,null,'false');
+alter abac policy 'boss_secret' enable;
+flush policy;
+select * from kejibu;
+id	name
+kj101	zhangsan
+kj102	lisi
+kj103	wangwu
+insert into kejibu(id,name) values('kj105','zhaoliu');
+select * from kejibu;
+id	name
+kj101	zhangsan
+kj102	lisi
+kj103	wangwu
+kj105	zhaoliu
+update kejibu set id = 'kj106' where name = 'zhaoliu';
+select * from kejibu;
+id	name
+kj101	zhangsan
+kj102	lisi
+kj103	wangwu
+kj106	zhaoliu
+delete from kejibu where id = 'kj106';
+ERROR 42000: DELETE command denied to user 'zhangsan'@'localhost' for table 'kejibu'
+select * from kaifabu;
+ERROR 42000: SELECT command denied to user 'zhangsan'@'localhost' for table 'kaifabu'
+select * from caiwubu;
+ERROR 42000: SELECT command denied to user 'zhangsan'@'localhost' for table 'caiwubu'
+select * from secret;
+ERROR 42000: SELECT command denied to user 'zhangsan'@'localhost' for table 'secret'
+select * from secret;
+id	info
+m101	123456
+insert into secret(id,info) values('m102','tom');
+select * from secret;
+id	info
+m101	123456
+m102	tom
+update secret set info = 'jack' where id = 'm102';
+select * from secret;
+id	info
+m101	123456
+m102	jack
+delete from secret where id ='m102';
+ERROR 42000: DELETE command denied to user 'boss'@'localhost' for table 'secret'
+update  abac_policies set sub_att=null where policy_name='zhangsan_kaifabu';
+update  abac_policies set sub_att=null where policy_name='boss_secret';
+grant abac attribute ('domain', 'kaifabu') to 'zhangsan@%';
+revoke abac attribute ('level', 'low') from 'zhangsan@%';
+grant abac attribute ('level', 'normal') to 'zhangsan@%';
+revoke abac attribute ('JobLevel', '3') from 'zhangsan@%';
+grant abac attribute ('JobLevel', '2') to 'zhangsan@%';
+revoke abac attribute ('level', 'normal') from 'boss@%';
+grant abac attribute ('level', 'high') to 'boss@%';
+Flush policy;
+select * from kejibu;
+id	name
+kj101	zhangsan
+kj102	lisi
+kj103	wangwu
+kj106	zhaoliu
+insert into kejibu(id,name) values('kj107','wangshiyi');
+select * from kejibu;
+id	name
+kj101	zhangsan
+kj102	lisi
+kj103	wangwu
+kj106	zhaoliu
+kj107	wangshiyi
+update kejibu set name = 'lishiyi' where id ='kj107';
+select * from kejibu;
+id	name
+kj101	zhangsan
+kj102	lisi
+kj103	wangwu
+kj106	zhaoliu
+kj107	lishiyi
+select * from kaifabu;
+id	name
+kf301	zhangsan
+kf302	lisi
+kf303	wangwu
+insert into kaifabu(id,name) values('kf304','zhaoliu');
+select * from kaifabu;
+id	name
+kf301	zhangsan
+kf302	lisi
+kf303	wangwu
+kf304	zhaoliu
+update kaifabu set name = 'zhaoshiyi' where id = 'kf304';
+select * from kaifabu;
+id	name
+kf301	zhangsan
+kf302	lisi
+kf303	wangwu
+kf304	zhaoshiyi
+delete from kaifabu where id = 'kf304';
+select * from kaifabu;
+id	name
+kf301	zhangsan
+kf302	lisi
+kf303	wangwu
+select * from caiwubu;
+ERROR 42000: SELECT command denied to user 'zhangsan'@'localhost' for table 'caiwubu'
+select * from secret;
+ERROR 42000: SELECT command denied to user 'zhangsan'@'localhost' for table 'secret'
+select * from secret;
+id	info
+m101	123456
+m102	jack
+delete from secret where id = 'm102';
+select * from secret;
+id	info
+m101	123456
+create abac policy ('zhangsan_time1','zhangsan@%','any','any', 0,'time',"'03:00:00'",'>','EnvValConstVal',null,null,'false');
+alter abac policy 'zhangsan_time1' enable;
+create abac policy ('zhangsan_time2','zhangsan@%','any','any', 0,'time',"'04:00:00'",'<','EnvValConstVal',null,null,'true');
+create abac policy ('zhangsan_time3','zhangsan@%','any','any', 0,'time',"'04:00:00'",'!=','EnvValConstVal',null,null,'true');
+create abac policy ('zhangsan_time4','zhangsan@%','any','any', 0,'time',"'03:30:00'",'==','EnvValConstVal',null,null,'true');
+flush policy;
+select now();
+now()
+2023-05-15 16:12:50
+select * from kejibu;
+ERROR 42000: Access denied for user 'zhangsan'@'%' to database 'company'
+alter abac policy 'zhangsan_time2' disable;
+alter abac policy 'zhangsan_time3' disable;
+alter abac policy 'zhangsan_time4' disable;
+flush policy;
+select now();
+now()
+2023-05-15 16:12:50
+select * from kejibu;
+id	name
+kj101	zhangsan
+kj102	lisi
+kj103	wangwu
+kj106	zhaoliu
+kj107	lishiyi
+drop abac policy 'zhangsan_time1';
+drop abac policy 'zhangsan_time2';
+drop abac policy 'zhangsan_time3';
+drop abac policy 'zhangsan_time4';
+flush policy;
+grant abac attribute ('level', 'low') to 'company.kejibu.id';
+grant abac attribute ('level', 'normal') to 'company.kejibu.name';
+grant abac attribute ('domain', 'kejibu') to 'company.kejibu.id';
+grant abac attribute ('domain', 'kejibu') to 'company.kejibu.name';
+create abac policy ('any_kejibu_id','any','company.kejibu.id','column', 0,'level',"null",'>','AttValAttval',null,null,'true');
+create abac policy ('any_kejibu_name','any','company.kejibu.name','column', 0,'level',"null",'>','AttValAttval',null,null,'true');
+flush policy;
+select id from kejibu;
+id
+kj101
+kj102
+kj103
+kj106
+kj107
+select name from kejibu;
+ERROR 42000: SELECT command denied to user 'zhangsan'@'localhost' for column 'name' in table 'kejibu'
+create abac policy ('zhangsan_date','zhangsan@%','any','any', 0,'date',"'2022-11-23'",'>=','EnvValConstVal',null,null,'true');
+create abac policy ('zhangsan_week','zhangsan@%','any','any', 0,'weekday',"'1'",'>=','EnvValConstVal',null,null,'true');
+flush policy;
+select id from kejibu;
+id
+kj101
+kj102
+kj103
+kj106
+kj107
+create abac attribute (8,'Double','double');
+grant abac attribute ('Double', '3.0') to 'zhangsan@%';
+create abac attribute (9,'String','string');
+grant abac attribute ('String', '1VS22') to 'zhangsan@%';
+create abac policy ('zhangsan_double','zhangsan@%','any','any', 0,'Double',"1.0",'>=','AttValConstVal',null,null,'true');
+create abac policy ('zhangsan_string1','zhangsan@%','any','any', 0,'String',"'?VS*'",'like','AttValConstVal',null,null,'true');
+create abac policy ('zhangsan_string2','zhangsan@%','any','any', 0,'String',"'1VS22'",'like','AttValConstVal',null,null,'true');
+flush policy;
+select id from kejibu;
+id
+kj101
+kj102
+kj103
+kj106
+kj107
+drop abac policy 'zhangsan_string1';
+drop abac policy 'zhangsan_string2';
+revoke abac attribute ('String', '1VS22') from 'zhangsan@%';
+grant abac attribute ('String', '1VS-22') to 'zhangsan@%';
+create abac policy ('zhangsan_string3','zhangsan@%','any','any', 0,'String',"'1VS-22'",'like','AttValConstVal',null,null,'true');
+flush policy;
+select id from kejibu;
+id
+kj101
+kj102
+kj103
+kj106
+kj107
+drop abac policy 'zhangsan_string3';
+revoke abac attribute ('String', '1VS-22') from 'zhangsan@%';
+grant abac attribute ('String', 'VS22') to 'zhangsan@%';
+create abac policy ('zhangsan_string4','zhangsan@%','any','any', 0,'String',"'?VS22?'",'like','AttValConstVal',null,null,'true');
+flush policy;
+select id from kejibu;
+ERROR 42000: Access denied for user 'zhangsan'@'%' to database 'company'
+drop abac policy 'zhangsan_string4';
+revoke abac attribute ('String', 'VS22') from 'zhangsan@%';
+grant abac attribute ('String', '123VS22') to 'zhangsan@%';
+create abac policy ('zhangsan_string5','zhangsan@%','any','any', 0,'String',"'*VS*'",'like','AttValConstVal',null,null,'true');
+flush policy;
+select id from kejibu;
+id
+kj101
+kj102
+kj103
+kj106
+kj107
+drop abac policy 'zhangsan_string5';
+revoke abac attribute ('String', '123VS22') from 'zhangsan@%';
+grant abac attribute ('String', '1VS22') to 'zhangsan@%';
+create abac policy ('zhangsan_string6','zhangsan@%','any','any', 0,'String',"'1V22'",'like','AttValConstVal',null,null,'true');
+flush policy;
+select id from kejibu;
+ERROR 42000: Access denied for user 'zhangsan'@'%' to database 'company'
+drop abac policy 'zhangsan_string6';
+revoke abac attribute ('String', '1VS22') from 'zhangsan@%';
+grant abac attribute ('String', '1VS?22') to 'zhangsan@%';
+create abac policy ('zhangsan_string7','zhangsan@%','any','any', 0,'String',"'1VS\\?22'",'like','AttValConstVal',null,null,'true');
+flush policy;
+select id from kejibu;
+id
+kj101
+kj102
+kj103
+kj106
+kj107
+drop abac policy 'zhangsan_string7';
+create abac policy ('zhangsan_eval','zhangsan@%','company.kejibu','table', 0,'JobLevel',"2",'==','AttValConstVal',42,null,'true');
+flush policy;
+select id from kejibu;
+id
+kj101
+kj102
+kj103
+kj106
+kj107
+drop abac policy 'zhangsan_eval';
+create abac policy ('zhangsan_noteval','zhangsan@%','company.kejibu','table', 0,'JobLevel',"30",'!=','AttValConstVal',42,null,'true');
+flush policy;
+select id from kejibu;
+id
+kj101
+kj102
+kj103
+kj106
+kj107
+drop abac policy 'zhangsan_noteval';
+create abac policy ('zhangsan_lesseval','zhangsan@%','company.kejibu','table', 0,'JobLevel',"30",'<=','AttValConstVal',42,null,'true');
+flush policy;
+select id from kejibu;
+id
+kj101
+kj102
+kj103
+kj106
+kj107
+drop abac policy 'zhangsan_lesseval';
+create abac policy ('zhangsan_moreeval','zhangsan@%','company.kejibu','table', 0,'JobLevel',"1",'>=','AttValConstVal',42,null,'true');
+flush policy;
+select id from kejibu;
+id
+kj101
+kj102
+kj103
+kj106
+kj107
+drop abac policy 'zhangsan_moreeval';
+create abac policy ('zhangsan_more','zhangsan@%','company.kejibu','table', 0,'JobLevel',"1",'>','AttValConstVal',42,null,'true');
+flush policy;
+select id from kejibu;
+id
+kj101
+kj102
+kj103
+kj106
+kj107
+create abac policy ('zhangsan_doubleeval','zhangsan@%','company.kejibu','table', 0,'Double',"3",'==','AttValConstVal',null,null,'true');
+flush policy;
+select id from kejibu;
+id
+kj101
+kj102
+kj103
+kj106
+kj107
+drop abac policy 'zhangsan_doubleeval';
+create abac policy ('zhangsan_doublenoteval','zhangsan@%','company.kejibu','table', 0,'Double',"1",'!=','AttValConstVal',null,null,'true');
+flush policy;
+select id from kejibu;
+id
+kj101
+kj102
+kj103
+kj106
+kj107
+drop abac policy 'zhangsan_doublenoteval';
+create abac policy ('zhangsan_doublemore','zhangsan@%','company.kejibu','table', 0,'Double',"1",'>','AttValConstVal',null,null,'true');
+flush policy;
+select id from kejibu;
+id
+kj101
+kj102
+kj103
+kj106
+kj107
+drop abac policy 'zhangsan_doublemore';
+create abac policy ('zhangsan_doubleless','zhangsan@%','company.kejibu','table', 0,'Double',"10",'<','AttValConstVal',null,null,'true');
+flush policy;
+select id from kejibu;
+id
+kj101
+kj102
+kj103
+kj106
+kj107
+drop abac policy 'zhangsan_doubleless';
+create abac policy ('zhangsan_doublelesseval','zhangsan@%','company.kejibu','table', 0,'Double',"10",'<=','AttValConstVal',null,null,'true');
+flush policy;
+select id from kejibu;
+id
+kj101
+kj102
+kj103
+kj106
+kj107
+drop abac policy 'zhangsan_doublelesseval';
+create abac policy ('zhangsan_uncontain1','zhangsan@%','company.kejibu','table', 0,'domain',"'secret'",'uncontain','AttValConstVal',null,null,'true');
+flush policy;
+create abac policy ('zhangsan_failed_contain','zhangsan@%','company.kejibu','table', 0,'domain',"'secret'",'contain','AttValConstVal',null,null,'true');
+result
+policy conflict with: default_level, please set this policy unenable.
+select id from kejibu;
+id
+kj101
+kj102
+kj103
+kj106
+kj107
+drop abac policy 'zhangsan_uncontain1';
+create abac policy ('zhangsan_uncontain2','zhangsan@%','company.kejibu','table', 0,'domain',"null",'uncontain','AttValAttVal',null,null,'false');
+alter abac policy 'zhangsan_uncontain2' enable;
+flush policy;
+select id from kejibu;
+ERROR 42000: SELECT command denied to user 'zhangsan'@'localhost' for table 'kejibu'
+drop abac policy 'zhangsan_uncontain2';
+create abac policy ('zhangsan_contain','zhangsan@%','company.kejibu','table', 0,'domain',"'kejibu'",'contain','AttValConstVal',null,null,'true');
+result
+policy conflict with: zhangsan_uncontain2, please set this policy unenable.
+flush policy;
+select id from kejibu;
+id
+kj101
+kj102
+kj103
+kj106
+kj107
+drop abac policy 'zhangsan_contain';
+create abac policy ('zhangsan_level1','zhangsan@%','company.kejibu','table', 0,'level',"'normal'",'==','AttValConstVal',null,null,'true');
+flush policy;
+select id from kejibu;
+id
+kj101
+kj102
+kj103
+kj106
+kj107
+drop abac policy 'zhangsan_level1';
+create abac policy ('zhangsan_level2','zhangsan@%','company.kejibu','table', 0,'level',"'normal'",'>=','AttValConstVal',null,null,'true');
+flush policy;
+select id from kejibu;
+id
+kj101
+kj102
+kj103
+kj106
+kj107
+drop abac policy 'zhangsan_level2';
+create abac policy ('zhangsan_level3','zhangsan@%','company.kejibu','table', 0,'level',"'high'",'<','AttValConstVal',null,null,'true');
+flush policy;
+select id from kejibu;
+id
+kj101
+kj102
+kj103
+kj106
+kj107
+drop abac policy 'zhangsan_level3';
+create abac policy ('zhangsan_level4','zhangsan@%','company.kejibu','table', 0,'level',"'high'",'<=','AttValConstVal',null,null,'true');
+flush policy;
+select id from kejibu;
+id
+kj101
+kj102
+kj103
+kj106
+kj107
+drop abac policy 'zhangsan_level4';
+create abac policy ('zhangsan_level5','zhangsan@%','company.kejibu','table', 0,'level',"'high'",'!=','AttValConstVal',null,null,'true');
+flush policy;
+select id from kejibu;
+id
+kj101
+kj102
+kj103
+kj106
+kj107
+drop abac policy 'zhangsan_level5';
+create abac policy ('zhangsan_level6','zhangsan@%','company.secret','table', 0,'level',"null",'==','AttValAttVal',null,null,'false');
+alter abac policy 'zhangsan_level6' enable;
+flush policy;
+select * from secret;
+ERROR 42000: SELECT command denied to user 'zhangsan'@'localhost' for table 'secret'
+drop abac policy 'zhangsan_level6';
+create abac policy ('zhangsan_level7','zhangsan@%','company.kejibu','table', 0,'level',"null",'>=','AttValAttVal',null,null,'true');
+flush policy;
+select * from kejibu;
+id	name
+kj101	zhangsan
+kj102	lisi
+kj103	wangwu
+kj106	zhaoliu
+kj107	lishiyi
+drop abac policy 'zhangsan_level7';
+create abac policy ('zhangsan_level8','zhangsan@%','company.kejibu','table', 0,'level',"null",'<','AttValAttVal',null,null,'false');
+alter abac policy 'zhangsan_level8' enable;
+flush policy;
+select * from kejibu;
+ERROR 42000: SELECT command denied to user 'zhangsan'@'localhost' for table 'kejibu'
+drop abac policy 'zhangsan_level8';
+create abac policy ('zhangsan_level9','zhangsan@%','company.kejibu','table', 0,'level',"null",'<=','AttValAttVal',null,null,'false');
+alter abac policy 'zhangsan_level9' enable;
+flush policy;
+select * from kejibu;
+ERROR 42000: SELECT command denied to user 'zhangsan'@'localhost' for table 'kejibu'
+drop abac policy 'zhangsan_level9';
+create abac policy ('zhangsan_level10','zhangsan@%','company.kejibu','table', 0,'level',"null",'!=','AttValAttVal',null,null,'true');
+result
+policy conflict with: zhangsan_level9, please set this policy unenable.
+flush policy;
+select * from kejibu;
+id	name
+kj101	zhangsan
+kj102	lisi
+kj103	wangwu
+kj106	zhaoliu
+kj107	lishiyi
+create abac policy ('zhangsan_date_fail','zhangsan@%','any','any', 0,'date',"'2022-21-23'",'>=','EnvValConstVal',null,null,'true');
+ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'abac policy ('zhangsan_date_fail','zhangsan@%','any','any', 0,'date',"'2022-21-2' at line 1
+create abac policy ('zhangsan_week_fail','zhangsan@%','any','any', 0,'weekday',"'10'",'>=','EnvValConstVal',null,null,'true');
+ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'abac policy ('zhangsan_week_fail','zhangsan@%','any','any', 0,'weekday',"'10'",'' at line 1
+create abac policy ('zhangsan_time_fail','zhangsan@%','any','any', 0,'time',"'25:00:00'",'<=','EnvValConstVal',null,null,'true');
+ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'abac policy ('zhangsan_time_fail','zhangsan@%','any','any', 0,'time',"'25:00:00'' at line 1
+create abac policy ('zhangsan_ip_fail','zhangsan@%','any','any', 0,'ip',"'999.999.999.999'",'<=','EnvValConstVal',null,null,'true');
+ERROR 42000: You have an error in your SQL syntax; check the manual that corresponds to your MySQL server version for the right syntax to use near 'abac policy ('zhangsan_ip_fail','zhangsan@%','any','any', 0,'ip',"'999.999.999.9' at line 1
+drop abac policy 'zhangsan_kaifabu';
+drop abac policy 'boss_secret';
+drop abac policy 'kejibu_delete';
+drop abac policy 'any_kejibu_id';
+drop abac policy 'any_kejibu_name';
+drop abac policy 'zhangsan_date';
+drop abac policy 'zhangsan_week';
+drop abac policy 'zhangsan_double';
+drop abac policy 'zhangsan_more';
+drop abac policy 'zhangsan_level10';
+flush policy;
+revoke abac attribute ('JobLevel', '1') from 'boss@%';
+revoke abac attribute ('JobLevel', '2') from 'zhangsan@%';
+revoke abac attribute ('Double', '3.0') from 'zhangsan@%';
+revoke abac attribute ('String', '1VS?22') from 'zhangsan@%';
+drop abac attribute 'JobLevel';
+drop abac attribute 'Double';
+drop abac attribute 'String';
+revoke abac attribute ('domain', 'company') from 'boss@%';
+revoke abac attribute ('domain', 'kejibu') from 'zhangsan@%';
+revoke abac attribute ('domain', 'kaifabu') from 'zhangsan@%';
+revoke abac attribute ('domain', 'caiwubu') from 'company.caiwubu';
+revoke abac attribute ('domain', 'kaifabu') from 'company.kaifabu';
+revoke abac attribute ('domain', 'kejibu') from 'company.kejibu';
+revoke abac attribute ('domain', 'company') from 'company.secret';
+revoke abac attribute ('domain', 'kejibu') from 'company.kejibu.id';
+revoke abac attribute ('domain', 'kejibu') from 'company.kejibu.name';
+revoke abac attribute ('level', 'high') from 'boss@%';
+revoke abac attribute ('level', 'normal') from 'zhangsan@%';
+revoke abac attribute ('level', 'low') from 'company';
+revoke abac attribute ('level', 'low') from 'company.caiwubu';
+revoke abac attribute ('level', 'low') from 'company.kaifabu';
+revoke abac attribute ('level', 'low') from 'company.kejibu';
+revoke abac attribute ('level', 'normal') from 'company.secret';
+revoke abac attribute ('level', 'low') from 'company.kejibu.id';
+revoke abac attribute ('level', 'normal') from 'company.kejibu.name';
+drop abac domain relation 'company' from 'root';
+result
+fail
+drop abac domain relation 'caiwubu' from 'company';
+drop abac domain relation 'caiwubu' from 'company';
+result
+fail
+drop abac domain relation 'kaifabu' from 'company';
+drop abac domain relation 'kejibu' from 'company';
+drop abac domain relation 'company' from 'root';
+drop abac domain 'company';
+drop abac domain 'caiwubu';
+drop abac domain 'kaifabu';
+drop abac domain 'kejibu';
+drop abac domain 'root';
+result
+can't delete root
+drop abac level 'highest';
+result
+can't delete highest
+shutdown ABAC;
+shutdown ABAC;
+drop user 'zhangsan'@'%';
+drop user 'boss'@'%';
+drop database company;

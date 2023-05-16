@@ -1,0 +1,689 @@
+# This test is to check various cases of ABAC and Customized commands
+# with and without access of tables, with and without access of columns
+connection default;
+
+#创建公司环境
+create user 'boss'@'%' identified by '123';
+create user 'zhangsan'@'%' identified by '123';
+create database company;
+use company;
+create table kejibu(  
+   id varchar(10) primary key,  
+   name varchar(20)
+);  
+create table caiwubu(  
+   id varchar(10) primary key,  
+   name varchar(20)
+);
+create table kaifabu(  
+   id varchar(10) primary key,  
+   name varchar(20)
+);
+create table secret(  
+   id varchar(10) primary key,  
+   info varchar(20)
+);
+insert into kejibu values ('kj101','zhangsan');
+insert into kejibu values ('kj102','lisi');
+insert into kejibu values ('kj103','wangwu');
+insert into caiwubu values ('cw201','zhangsan');
+insert into caiwubu values ('cw202','lisi');
+insert into caiwubu values ('cw203','wangwu');
+insert into kaifabu values ('kf301','zhangsan');
+insert into kaifabu values ('kf302','lisi');
+insert into kaifabu values ('kf303','wangwu');
+insert into secret values ('m101','123456');
+grant all privileges on company.* to 'boss'@'%';
+update mysql.user set Show_db_priv='Y' where User='boss';
+grant all privileges on company.* to 'zhangsan'@'%';
+update mysql.user set Show_db_priv='Y' where User='zhangsan';
+flush privileges;
+
+#检查boss跟zhangsan对company数据库的权限
+# Now check this user with different databases when ABAC is down
+connect (con_zhangsan_company,127.0.0.1,zhangsan,'123',company);
+show tables;
+connect (con_boss_company,127.0.0.1,boss,'123',company);
+show tables;
+
+
+connect (con_supervisor,127.0.0.1,supervisor,,mysql);
+
+##### 开启ABAC，然后测试所有自定义命令
+start ABAC;
+
+#policy相关
+create abac policy ('before_ABAC','zhangsan@%','company.kejibu','table', 8,'level',"'normal'",'>','AttValConstVal',28,null,'false');
+alter abac policy 'before_ABAC' enable;
+show abac policies;
+alter abac policy 'before_ABAC' disable;
+drop abac policy 'before_ABAC';
+
+#attribute domain相关
+create abac domain 'company';
+create abac domain 'kejibu';
+show abac domains;
+create abac domain relation 'company' to 'root'; 
+create abac domain relation 'kejibu' to 'company'; 
+show abac domain relations;
+grant abac domain 'company' to 'boss@%';
+grant abac domain 'company' to 'company';
+grant abac domain 'kejibu' to 'company.kejibu';
+show abac domain on 'boss@%';
+show abac domain on 'company';
+show abac domain on 'company' in 'kejibu';
+revoke abac attribute ('domain', 'company') from 'boss@%';
+revoke abac attribute ('domain', 'company') from 'company';
+revoke abac attribute ('domain', 'kejibu') from 'company.kejibu';
+drop abac domain relation 'kejibu' from 'company';
+drop abac domain relation 'company' from 'root';
+drop abac domain 'kejibu';
+drop abac domain 'company';
+
+#attribute level相关
+create abac level 'lowest';
+show abac levels;
+create abac level relation 'lowest' to 'low'; 
+show abac level relations;
+grant abac level 'lowest' to 'company';
+grant abac level 'lowest' to 'company.kejibu';
+grant abac level 'low' to 'boss@%';
+show abac level on 'boss@%';
+show abac level on 'company';
+show abac level on 'company' in 'kejibu';
+revoke abac attribute ('level', 'low') from 'boss@%';
+revoke abac attribute ('level', 'lowest') from 'company';
+revoke abac attribute ('level', 'lowest') from 'company.kejibu';
+drop abac level relation 'lowest' from 'low';
+drop abac level 'lowest';
+
+#attribute 自定义属性相关
+create abac attribute (9,'JobLevel','int');
+show abac attributes;
+grant abac attribute ('JobLevel', '1') to 'boss@%';
+show abac attributes_manager;
+revoke abac attribute ('JobLevel', '1') from 'boss@%';
+drop abac attribute 'JobLevel';
+
+
+##### 进行初始属性分配和策略配置
+#创建公司domain
+create abac domain 'company'; 
+--error 1062
+create abac domain 'company'; 
+create abac domain 'caiwubu';
+create abac domain 'kaifabu';
+create abac domain 'kejibu';
+create abac domain relation 'company' to 'root'; 
+#fail
+create abac domain relation 'company' to 'root'; 
+create abac domain relation 'caiwubu' to 'company';
+create abac domain relation 'kaifabu' to 'company';
+create abac domain relation 'kejibu' to 'company';
+flush policy;
+#增加JobLevel属性
+create abac attribute (7,'JobLevel','int');
+--error 1062
+create abac attribute (7,'JobLevel','int');
+#增加lowest-level，用于测试自定义语句
+create abac level 'lowest';
+--error 1062
+create abac level 'lowest';
+create abac level relation 'lowest' to 'low';
+#fail
+create abac level relation 'lowest' to 'low';
+drop abac level relation 'lowest' from 'low';
+#fail
+drop abac level relation 'lowest' from 'low';
+drop abac level 'lowest';
+drop abac level 'lowest';
+grant abac level 'normal' to 'boss@%';
+grant abac attribute ('level', 'low') to 'zhangsan@%';
+--error 1062 
+grant abac attribute ('level', 'low') to 'zhangsan@%';
+grant abac attribute ('level', 'low') to 'company';
+grant abac attribute ('level', 'low') to 'company.caiwubu';
+grant abac attribute ('level', 'low') to 'company.kaifabu';
+grant abac attribute ('level', 'low') to 'company.kejibu';
+grant abac attribute ('level', 'normal') to 'company.secret';
+grant abac domain 'company' to 'boss@%';
+grant abac attribute ('domain', 'kejibu') to 'zhangsan@%';
+grant abac attribute ('domain', 'caiwubu') to 'company.caiwubu';
+grant abac attribute ('domain', 'kaifabu') to 'company.kaifabu';
+grant abac attribute ('domain', 'kejibu') to 'company.kejibu';
+grant abac attribute ('domain', 'company') to 'company.secret';
+grant abac attribute ('JobLevel', '1') to 'boss@%';
+grant abac attribute ('JobLevel', '3') to 'zhangsan@%';
+flush policy;
+show abac domain relations;
+show abac domains;
+show abac domain on 'zhangsan@%';
+show abac domain on 'company' in 'kejibu';
+show abac levels;
+show abac level relations;
+show abac level on 'zhangsan@%';
+show abac level on 'company' in 'kejibu';
+show abac policies;
+show abac attributes;
+show abac attributes_manager;
+
+#for default 分支
+select policy_name,policy_id from abac_policies;
+#检测默认策略下zhangsan对company.kejibu和company.caiwubu的权限，预期：kejibu有权限，caiwubu没权限。
+# Now check zhangsan with different tables when ABAC is up, but only init_policy
+connection con_zhangsan_company;
+
+#测试accessdeny的语句
+show abac domain relations;
+show abac domains;
+--error 1044
+show abac domain on 'zhangsan@%';
+--error 1044
+show abac domain on 'company' in 'kejibu';
+show abac levels;
+show abac level relations;
+--error 1044
+show abac level on 'zhangsan@%';
+--error 1044
+show abac level on 'company' in 'kejibu';
+--error 1044
+show abac policies;
+--error 1044
+show abac attributes;
+--error 1044
+show abac attributes_manager;
+--error 1044
+create abac domain 'company';
+create abac domain relation 'company' to 'root';
+drop abac domain relation 'caiwubu' from 'company';
+--error 1044
+drop abac domain 'company'; 
+--error 1044
+create abac level 'lowest';
+create abac level relation 'lowest' to 'low';
+drop abac level relation 'lowest' from 'low';
+--error 1044
+drop abac level 'lowest';
+select * from kejibu;
+#select * from caiwubu;
+--error 1142
+select * from caiwubu;
+
+#connection con_supervisor;
+connection con_supervisor;
+#new added 11/15 tzj
+#策略2-kejibu_delete：只有level比kejibu表(low)高的用户才能对表进行删除操作
+create abac policy ('kejibu_delete','any','company.kejibu','table', 8,'level',"null",'>','AttValAttval',null,null,'true');
+flush policy;
+#插入冲突策略
+create abac policy ('kejibu_failed_delete','zhangsan@%','company.kejibu','table', 8,'level',"null",'<','AttValAttval',null,null,'true');
+#new added end
+#策略3-zhangsan_kaifabu:增加zhangsan对kaifabu表只有满足JobLevel<3时才可以进行任意操作的策略。
+create abac policy ('zhangsan_kaifabu','zhangsan@%','company.kaifabu','table', 0,'JobLevel',"3",'<','AttValConstVal',42,null,'false');
+alter abac policy 'zhangsan_kaifabu' enable;
+#策略4-boss_secret:增加boss对secret表只有满足level>normal时才可以进行删除操作的策略。
+create abac policy ('boss_secret','boss@%','company.secret','table', 8,'level',"'normal'",'>','AttValConstVal',28,null,'false');
+alter abac policy 'boss_secret' enable;
+flush policy;
+# Now check any user with kejibu tables when ABAC is up, and with DELETE policy of age
+#connection con_zhangsan_company;
+connection con_zhangsan_company;
+#new added 11/15 tzj
+#检查策略2-kejibu_delete是否生效，分别进行查、增、改、删操作
+select * from kejibu;
+insert into kejibu(id,name) values('kj105','zhaoliu');
+select * from kejibu;
+update kejibu set id = 'kj106' where name = 'zhaoliu';
+select * from kejibu;
+--error 1142
+delete from kejibu where id = 'kj106';
+#new added end
+#检查策略1、策略3-zhangsan_kaifabu是否生效
+--error 1142
+#select * from kaifabu;
+select * from kaifabu;
+#new added 11/15 tzj
+#检查策略1是否生效
+--error 1142
+select * from caiwubu;
+#检查策略1、策略4是否生效
+--error 1142
+select * from secret;
+#new added end
+#检查策略4-boss_secret是否生效，分别进行查、增、改、删操作
+#connection con_boss_company;
+connection con_boss_company;
+#select * from secret;
+select * from secret;
+#insert into secret(id,info) values('m102','tom');
+insert into secret(id,info) values('m102','tom');
+select * from secret;
+#update secret set info = 'jack' where id = 'm102';
+update secret set info = 'jack' where id = 'm102';
+select * from secret;
+--error 1142
+#delete from secret where id ='m102';
+delete from secret where id ='m102';
+#new added 11/15 tzj
+#假设张三兼职开发部，增加改变属性，且Boss的level切换为‘high’
+connection con_supervisor;
+update  abac_policies set sub_att=null where policy_name='zhangsan_kaifabu';
+update  abac_policies set sub_att=null where policy_name='boss_secret';
+grant abac attribute ('domain', 'kaifabu') to 'zhangsan@%';
+revoke abac attribute ('level', 'low') from 'zhangsan@%';
+grant abac attribute ('level', 'normal') to 'zhangsan@%';
+revoke abac attribute ('JobLevel', '3') from 'zhangsan@%';
+grant abac attribute ('JobLevel', '2') to 'zhangsan@%';
+revoke abac attribute ('level', 'normal') from 'boss@%';
+grant abac attribute ('level', 'high') to 'boss@%';
+Flush policy;
+#检查更新后的策略生效情况
+connection con_zhangsan_company;
+#主体张三对科技部表的操作：满足策略1和策略2。所以张三可以对科技部表进行增删改查
+select * from kejibu;
+insert into kejibu(id,name) values('kj107','wangshiyi');
+select * from kejibu;
+update kejibu set name = 'lishiyi' where id ='kj107';
+select * from kejibu;
+#主体张三对开发部表的操作：满足策略1和策略3，所以张三可以对开发部表进行增删改查
+select * from kaifabu;
+insert into kaifabu(id,name) values('kf304','zhaoliu');
+select * from kaifabu;
+update kaifabu set name = 'zhaoshiyi' where id = 'kf304';
+select * from kaifabu;
+delete from kaifabu where id = 'kf304';
+select * from kaifabu;
+#主体张三对财务部表的操作：不满足策略1，所以张三无法访问财务部表
+--error 1142
+select * from caiwubu;
+#主体张三对secret表的操作:不满足策略1和策略4，无法访问和任何操作
+--error 1142
+select * from secret;
+#检查boss属性变化，可以对secret表进行删除操作
+#connection con_boss_company;
+connection con_boss_company;
+select * from secret;
+delete from secret where id = 'm102';
+select * from secret;
+#新增时间环境策略5-zhangsan_time1、zhangsan_time2，规定zhangsan只有在3～4点才可以访问任何资源
+#connection con_supervisor;
+connection con_supervisor;
+create abac policy ('zhangsan_time1','zhangsan@%','any','any', 0,'time',"'03:00:00'",'>','EnvValConstVal',null,null,'false');
+alter abac policy 'zhangsan_time1' enable;
+create abac policy ('zhangsan_time2','zhangsan@%','any','any', 0,'time',"'04:00:00'",'<','EnvValConstVal',null,null,'true');
+create abac policy ('zhangsan_time3','zhangsan@%','any','any', 0,'time',"'04:00:00'",'!=','EnvValConstVal',null,null,'true');
+create abac policy ('zhangsan_time4','zhangsan@%','any','any', 0,'time',"'03:30:00'",'==','EnvValConstVal',null,null,'true');
+flush policy;
+#检查更新后的策略生效情况
+connection con_zhangsan_company;
+select now();
+--error 1044
+select * from kejibu;
+#新增时间环境策略5-zhangsan_time2，将大于4点的策略设置为不生效
+#connection con_supervisor;
+connection con_supervisor;
+alter abac policy 'zhangsan_time2' disable;
+alter abac policy 'zhangsan_time3' disable;
+alter abac policy 'zhangsan_time4' disable;
+flush policy;
+#检查更新后的策略生效情况
+connection con_zhangsan_company;
+select now();
+select * from kejibu;
+#为防止影响后续操做，删除对于时间限制的策略
+#connection con_supervisor;
+connection con_supervisor;
+drop abac policy 'zhangsan_time1';
+drop abac policy 'zhangsan_time2';
+drop abac policy 'zhangsan_time3';
+drop abac policy 'zhangsan_time4';
+flush policy;
+#开始测试列级别策略，赋予列属性
+grant abac attribute ('level', 'low') to 'company.kejibu.id';
+grant abac attribute ('level', 'normal') to 'company.kejibu.name';
+grant abac attribute ('domain', 'kejibu') to 'company.kejibu.id';
+grant abac attribute ('domain', 'kejibu') to 'company.kejibu.name';
+#增加列相关的策略any_kejibu_id、any_kejibu_name
+#如果要对 id 列进行访问， 则需要 s.level > o.level 由于id列的level为low 所以可以访问
+create abac policy ('any_kejibu_id','any','company.kejibu.id','column', 0,'level',"null",'>','AttValAttval',null,null,'true');
+#如果要对 name 列进行访问， 则需要 s.level > o.level 由于name列的level为normal
+create abac policy ('any_kejibu_name','any','company.kejibu.name','column', 0,'level',"null",'>','AttValAttval',null,null,'true');
+flush policy;
+#更新策略后检查zhangsan对两列的权限
+connection con_zhangsan_company;
+select id from kejibu;
+--error 1143
+select name from kejibu;
+#new added end
+#测试date跟week策略
+connection con_supervisor;
+create abac policy ('zhangsan_date','zhangsan@%','any','any', 0,'date',"'2022-11-23'",'>=','EnvValConstVal',null,null,'true');
+create abac policy ('zhangsan_week','zhangsan@%','any','any', 0,'weekday',"'1'",'>=','EnvValConstVal',null,null,'true');
+flush policy;
+connection con_zhangsan_company;
+select id from kejibu;
+#测试like策略
+connection con_supervisor;
+create abac attribute (8,'Double','double');
+grant abac attribute ('Double', '3.0') to 'zhangsan@%';
+create abac attribute (9,'String','string');
+grant abac attribute ('String', '1VS22') to 'zhangsan@%';
+create abac policy ('zhangsan_double','zhangsan@%','any','any', 0,'Double',"1.0",'>=','AttValConstVal',null,null,'true');
+create abac policy ('zhangsan_string1','zhangsan@%','any','any', 0,'String',"'?VS*'",'like','AttValConstVal',null,null,'true');
+create abac policy ('zhangsan_string2','zhangsan@%','any','any', 0,'String',"'1VS22'",'like','AttValConstVal',null,null,'true');
+flush policy;
+connection con_zhangsan_company;
+select id from kejibu;
+#测试string策略
+#string 3
+connection con_supervisor;
+drop abac policy 'zhangsan_string1';
+drop abac policy 'zhangsan_string2';
+revoke abac attribute ('String', '1VS22') from 'zhangsan@%';
+grant abac attribute ('String', '1VS-22') to 'zhangsan@%';
+create abac policy ('zhangsan_string3','zhangsan@%','any','any', 0,'String',"'1VS-22'",'like','AttValConstVal',null,null,'true');
+flush policy;
+connection con_zhangsan_company;
+select id from kejibu;
+#string 4
+connection con_supervisor;
+drop abac policy 'zhangsan_string3';
+revoke abac attribute ('String', '1VS-22') from 'zhangsan@%';
+grant abac attribute ('String', 'VS22') to 'zhangsan@%';
+create abac policy ('zhangsan_string4','zhangsan@%','any','any', 0,'String',"'?VS22?'",'like','AttValConstVal',null,null,'true');
+flush policy;
+connection con_zhangsan_company;
+--error 1044
+select id from kejibu;
+#string 5
+connection con_supervisor;
+drop abac policy 'zhangsan_string4';
+revoke abac attribute ('String', 'VS22') from 'zhangsan@%';
+grant abac attribute ('String', '123VS22') to 'zhangsan@%';
+create abac policy ('zhangsan_string5','zhangsan@%','any','any', 0,'String',"'*VS*'",'like','AttValConstVal',null,null,'true');
+flush policy;
+connection con_zhangsan_company;
+select id from kejibu;
+#string 6
+connection con_supervisor;
+drop abac policy 'zhangsan_string5';
+revoke abac attribute ('String', '123VS22') from 'zhangsan@%';
+grant abac attribute ('String', '1VS22') to 'zhangsan@%';
+create abac policy ('zhangsan_string6','zhangsan@%','any','any', 0,'String',"'1V22'",'like','AttValConstVal',null,null,'true');
+flush policy;
+connection con_zhangsan_company;
+--error 1044
+select id from kejibu;
+#string 7
+connection con_supervisor;
+drop abac policy 'zhangsan_string6';
+revoke abac attribute ('String', '1VS22') from 'zhangsan@%';
+grant abac attribute ('String', '1VS?22') to 'zhangsan@%';
+create abac policy ('zhangsan_string7','zhangsan@%','any','any', 0,'String',"'1VS\\?22'",'like','AttValConstVal',null,null,'true');
+flush policy;
+connection con_zhangsan_company;
+select id from kejibu;
+#测试int所有对比情况，上述策略只涉及到<
+#==
+connection con_supervisor;
+drop abac policy 'zhangsan_string7';
+create abac policy ('zhangsan_eval','zhangsan@%','company.kejibu','table', 0,'JobLevel',"2",'==','AttValConstVal',42,null,'true');
+flush policy;
+connection con_zhangsan_company;
+select id from kejibu;
+#!=
+connection con_supervisor;
+drop abac policy 'zhangsan_eval';
+create abac policy ('zhangsan_noteval','zhangsan@%','company.kejibu','table', 0,'JobLevel',"30",'!=','AttValConstVal',42,null,'true');
+flush policy;
+connection con_zhangsan_company;
+select id from kejibu;
+#<=
+connection con_supervisor;
+drop abac policy 'zhangsan_noteval';
+create abac policy ('zhangsan_lesseval','zhangsan@%','company.kejibu','table', 0,'JobLevel',"30",'<=','AttValConstVal',42,null,'true');
+flush policy;
+connection con_zhangsan_company;
+select id from kejibu;
+#>=
+connection con_supervisor;
+drop abac policy 'zhangsan_lesseval';
+create abac policy ('zhangsan_moreeval','zhangsan@%','company.kejibu','table', 0,'JobLevel',"1",'>=','AttValConstVal',42,null,'true');
+flush policy;
+connection con_zhangsan_company;
+select id from kejibu;
+#>
+connection con_supervisor;
+drop abac policy 'zhangsan_moreeval';
+create abac policy ('zhangsan_more','zhangsan@%','company.kejibu','table', 0,'JobLevel',"1",'>','AttValConstVal',42,null,'true');
+flush policy;
+connection con_zhangsan_company;
+select id from kejibu;
+#测试double所有对比情况，上述策略只涉及到>=
+#==
+connection con_supervisor;
+create abac policy ('zhangsan_doubleeval','zhangsan@%','company.kejibu','table', 0,'Double',"3",'==','AttValConstVal',null,null,'true');
+flush policy;
+connection con_zhangsan_company;
+select id from kejibu;
+#!=
+connection con_supervisor;
+drop abac policy 'zhangsan_doubleeval';
+create abac policy ('zhangsan_doublenoteval','zhangsan@%','company.kejibu','table', 0,'Double',"1",'!=','AttValConstVal',null,null,'true');
+flush policy;
+connection con_zhangsan_company;
+select id from kejibu;
+#>
+connection con_supervisor;
+drop abac policy 'zhangsan_doublenoteval';
+create abac policy ('zhangsan_doublemore','zhangsan@%','company.kejibu','table', 0,'Double',"1",'>','AttValConstVal',null,null,'true');
+flush policy;
+connection con_zhangsan_company;
+select id from kejibu;
+#<
+connection con_supervisor;
+drop abac policy 'zhangsan_doublemore';
+create abac policy ('zhangsan_doubleless','zhangsan@%','company.kejibu','table', 0,'Double',"10",'<','AttValConstVal',null,null,'true');
+flush policy;
+connection con_zhangsan_company;
+select id from kejibu;
+#<=
+connection con_supervisor;
+drop abac policy 'zhangsan_doubleless';
+create abac policy ('zhangsan_doublelesseval','zhangsan@%','company.kejibu','table', 0,'Double',"10",'<=','AttValConstVal',null,null,'true');
+flush policy;
+connection con_zhangsan_company;
+select id from kejibu;
+#测试uncontain
+#AV
+connection con_supervisor;
+drop abac policy 'zhangsan_doublelesseval';
+create abac policy ('zhangsan_uncontain1','zhangsan@%','company.kejibu','table', 0,'domain',"'secret'",'uncontain','AttValConstVal',null,null,'true');
+flush policy;
+#插入冲突策略
+create abac policy ('zhangsan_failed_contain','zhangsan@%','company.kejibu','table', 0,'domain',"'secret'",'contain','AttValConstVal',null,null,'true');
+connection con_zhangsan_company;
+select id from kejibu;
+#AA
+connection con_supervisor;
+drop abac policy 'zhangsan_uncontain1';
+create abac policy ('zhangsan_uncontain2','zhangsan@%','company.kejibu','table', 0,'domain',"null",'uncontain','AttValAttVal',null,null,'false');
+alter abac policy 'zhangsan_uncontain2' enable;
+flush policy;
+connection con_zhangsan_company;
+--error 1142
+select id from kejibu;
+#测试contain AV
+connection con_supervisor;
+drop abac policy 'zhangsan_uncontain2';
+create abac policy ('zhangsan_contain','zhangsan@%','company.kejibu','table', 0,'domain',"'kejibu'",'contain','AttValConstVal',null,null,'true');
+flush policy;
+connection con_zhangsan_company;
+select id from kejibu;
+#测试level所有对比情况，上述策略只涉及到>
+#AV
+#==
+connection con_supervisor;
+drop abac policy 'zhangsan_contain';
+create abac policy ('zhangsan_level1','zhangsan@%','company.kejibu','table', 0,'level',"'normal'",'==','AttValConstVal',null,null,'true');
+flush policy;
+connection con_zhangsan_company;
+select id from kejibu;
+#>=
+connection con_supervisor;
+drop abac policy 'zhangsan_level1';
+create abac policy ('zhangsan_level2','zhangsan@%','company.kejibu','table', 0,'level',"'normal'",'>=','AttValConstVal',null,null,'true');
+flush policy;
+connection con_zhangsan_company;
+select id from kejibu;
+#<
+connection con_supervisor;
+drop abac policy 'zhangsan_level2';
+create abac policy ('zhangsan_level3','zhangsan@%','company.kejibu','table', 0,'level',"'high'",'<','AttValConstVal',null,null,'true');
+flush policy;
+connection con_zhangsan_company;
+select id from kejibu;
+#<=
+connection con_supervisor;
+drop abac policy 'zhangsan_level3';
+create abac policy ('zhangsan_level4','zhangsan@%','company.kejibu','table', 0,'level',"'high'",'<=','AttValConstVal',null,null,'true');
+flush policy;
+connection con_zhangsan_company;
+select id from kejibu;
+#!=
+connection con_supervisor;
+drop abac policy 'zhangsan_level4';
+create abac policy ('zhangsan_level5','zhangsan@%','company.kejibu','table', 0,'level',"'high'",'!=','AttValConstVal',null,null,'true');
+flush policy;
+connection con_zhangsan_company;
+select id from kejibu;
+#AA
+#==
+connection con_supervisor;
+drop abac policy 'zhangsan_level5';
+create abac policy ('zhangsan_level6','zhangsan@%','company.secret','table', 0,'level',"null",'==','AttValAttVal',null,null,'false');
+alter abac policy 'zhangsan_level6' enable;
+flush policy;
+connection con_zhangsan_company;
+--error 1142
+select * from secret;
+#>=
+connection con_supervisor;
+drop abac policy 'zhangsan_level6';
+create abac policy ('zhangsan_level7','zhangsan@%','company.kejibu','table', 0,'level',"null",'>=','AttValAttVal',null,null,'true');
+flush policy;
+connection con_zhangsan_company;
+select * from kejibu;
+#<
+connection con_supervisor;
+drop abac policy 'zhangsan_level7';
+create abac policy ('zhangsan_level8','zhangsan@%','company.kejibu','table', 0,'level',"null",'<','AttValAttVal',null,null,'false');
+alter abac policy 'zhangsan_level8' enable;
+flush policy;
+connection con_zhangsan_company;
+--error 1142
+select * from kejibu;
+#<=
+connection con_supervisor;
+drop abac policy 'zhangsan_level8';
+create abac policy ('zhangsan_level9','zhangsan@%','company.kejibu','table', 0,'level',"null",'<=','AttValAttVal',null,null,'false');
+alter abac policy 'zhangsan_level9' enable;
+flush policy;
+connection con_zhangsan_company;
+--error 1142
+select * from kejibu;
+#!=
+connection con_supervisor;
+drop abac policy 'zhangsan_level9';
+create abac policy ('zhangsan_level10','zhangsan@%','company.kejibu','table', 0,'level',"null",'!=','AttValAttVal',null,null,'true');
+flush policy;
+connection con_zhangsan_company;
+select * from kejibu;
+#恢复
+#connection con_supervisor;
+connection con_supervisor;
+#测试策略非法
+--error 1064
+create abac policy ('zhangsan_date_fail','zhangsan@%','any','any', 0,'date',"'2022-21-23'",'>=','EnvValConstVal',null,null,'true');
+--error 1064
+create abac policy ('zhangsan_week_fail','zhangsan@%','any','any', 0,'weekday',"'10'",'>=','EnvValConstVal',null,null,'true');
+--error 1064
+create abac policy ('zhangsan_time_fail','zhangsan@%','any','any', 0,'time',"'25:00:00'",'<=','EnvValConstVal',null,null,'true');
+--error 1064
+create abac policy ('zhangsan_ip_fail','zhangsan@%','any','any', 0,'ip',"'999.999.999.999'",'<=','EnvValConstVal',null,null,'true');
+#策略删除
+drop abac policy 'zhangsan_kaifabu';
+drop abac policy 'boss_secret';
+drop abac policy 'kejibu_delete';
+drop abac policy 'any_kejibu_id';
+drop abac policy 'any_kejibu_name';
+drop abac policy 'zhangsan_date';
+drop abac policy 'zhangsan_week';
+drop abac policy 'zhangsan_double';
+drop abac policy 'zhangsan_more';
+drop abac policy 'zhangsan_level10';
+flush policy;
+#attributes_manager删除
+revoke abac attribute ('JobLevel', '1') from 'boss@%';
+revoke abac attribute ('JobLevel', '2') from 'zhangsan@%';
+revoke abac attribute ('Double', '3.0') from 'zhangsan@%';
+revoke abac attribute ('String', '1VS?22') from 'zhangsan@%';
+#attributes删除
+drop abac attribute 'JobLevel';
+drop abac attribute 'Double';
+drop abac attribute 'String';
+#去除object上的新增domain属性
+revoke abac attribute ('domain', 'company') from 'boss@%';
+revoke abac attribute ('domain', 'kejibu') from 'zhangsan@%';
+revoke abac attribute ('domain', 'kaifabu') from 'zhangsan@%';
+revoke abac attribute ('domain', 'caiwubu') from 'company.caiwubu';
+revoke abac attribute ('domain', 'kaifabu') from 'company.kaifabu';
+revoke abac attribute ('domain', 'kejibu') from 'company.kejibu';
+revoke abac attribute ('domain', 'company') from 'company.secret';
+#new added 11/16 tzj
+revoke abac attribute ('domain', 'kejibu') from 'company.kejibu.id';
+revoke abac attribute ('domain', 'kejibu') from 'company.kejibu.name';
+#new added end
+#去除object上的新增level属性
+revoke abac attribute ('level', 'high') from 'boss@%';
+revoke abac attribute ('level', 'normal') from 'zhangsan@%';
+revoke abac attribute ('level', 'low') from 'company';
+revoke abac attribute ('level', 'low') from 'company.caiwubu';
+revoke abac attribute ('level', 'low') from 'company.kaifabu';
+revoke abac attribute ('level', 'low') from 'company.kejibu';
+revoke abac attribute ('level', 'normal') from 'company.secret';
+#new added 11/16 tzj
+revoke abac attribute ('level', 'low') from 'company.kejibu.id';
+revoke abac attribute ('level', 'normal') from 'company.kejibu.name';
+#new added end
+#删除新增domain关系
+#fail
+drop abac domain relation 'company' from 'root'; 
+drop abac domain relation 'caiwubu' from 'company';
+#fail
+drop abac domain relation 'caiwubu' from 'company';
+drop abac domain relation 'kaifabu' from 'company';
+drop abac domain relation 'kejibu' from 'company';
+drop abac domain relation 'company' from 'root'; 
+#删除新增domain
+drop abac domain 'company'; 
+drop abac domain 'caiwubu';
+drop abac domain 'kaifabu';
+drop abac domain 'kejibu';
+#删除root domain，highest level
+drop abac domain 'root';
+drop abac level 'highest';
+#关闭ABAC
+shutdown ABAC;
+shutdown ABAC;
+disconnect con_supervisor;
+disconnect con_boss_company;
+disconnect con_zhangsan_company;
+connection default;
+# remove user 'boss' and 'zhangsan', so that other tests which may use 'boss' and 'zhangsan'.
+# do not depend on this test.
+drop user 'zhangsan'@'%';
+drop user 'boss'@'%';
+#drop database company;
+drop database company;
+disconnect default;
