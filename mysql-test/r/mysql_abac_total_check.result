@@ -48,6 +48,7 @@ secret
 start ABAC;
 create abac policy ('before_ABAC','zhangsan@%','company.kejibu','table', 8,'level',"'normal'",'>','AttValConstVal',28,null,'false');
 alter abac policy 'before_ABAC' enable;
+flush policy;
 show abac policies;
 subject	object	obj_typ	operation	policy_name	policy_id	att_name	const_val	operator	tag	sub_att	obj_att	policy_enable
 any	any	any	0	default_level	1	level	NULL	>=	AttValAttval	NULL	NULL	1
@@ -528,7 +529,7 @@ create abac policy ('zhangsan_time4','zhangsan@%','any','any', 0,'time',"'03:30:
 flush policy;
 select now();
 now()
-2023-05-15 16:12:50
+SECONDS
 select * from kejibu;
 ERROR 42000: Access denied for user 'zhangsan'@'%' to database 'company'
 alter abac policy 'zhangsan_time2' disable;
@@ -537,7 +538,7 @@ alter abac policy 'zhangsan_time4' disable;
 flush policy;
 select now();
 now()
-2023-05-15 16:12:50
+SECONDS
 select * from kejibu;
 id	name
 kj101	zhangsan

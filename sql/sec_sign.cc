@@ -52,17 +52,23 @@ int domaincmp(const char* domain1, uint len1,
 bool add_level(const char* level_p, uint len_p, 
 								 const char* level_n, uint len_n)
 {
+	if( level_p && level_link->empty() || !level_p && !level_link->empty() )
+		return false;
 	LINK_PTR temp_p=NULL, temp_n=NULL;
 	temp_p = level_link->search(level_p, len_p);
+	temp_n = level_link->search(level_n, len_n);
 
-	//如果要插入的节点已经存在 也返回 false 
-	if(level_link->search(level_n, len_n) != NULL)
+	//没有指定下级名称，或者要增加的下级已经存在
+	if( level_n == NULL || temp_n != NULL)
 		return false;
 
 	//如果不存在指定的上级
 	if(level_p && !temp_p )
 		return false;
 	
+	//只有在链表插入第一个节点时才允许
+	if(!level_p && !level_link->empty()) return false;
+
 	//如果要插入的位置不是尾部
 	if(!level_link->is_tail(level_p, len_p))
 		return false;
@@ -81,19 +87,23 @@ bool add_level(const char* level_p, uint len_p,
 bool add_domain(const char* domain_p, uint len_p,
 							  const char* domain_n, uint len_n)
 {   //空树的时候指定上级 
-	if( domain_p && domain_tree->empty()  )
-		return false;
+	// if( domain_p && domain_tree->empty() || !domain_p && !domain_tree->empty() )
+		// return false;
 
 	TREE_PTR temp_p=NULL, temp_n=NULL;
 	temp_p = domain_tree->search(domain_p, len_p);
 	temp_n = domain_tree->search(domain_n, len_n);
 	
-	//要增加的下级已经存在
-	if(temp_n != NULL) return false;
+	//没有指定下级名称，或者要增加的下级已经存在
+	if(domain_n == NULL || temp_n != NULL) return false;
 	
 	//指定了不存在的上级
 	if( domain_p&&!temp_p )
 		return false;
+
+	//只有在空树插入根节点时才有效
+	if(!domain_p && !domain_tree->empty()) return false;
+
 	if((temp_n = domain_tree->create_node(domain_n, len_n)) == NULL)
 		return false;
 		

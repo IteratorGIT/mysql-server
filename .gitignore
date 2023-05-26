@@ -20,4 +20,5 @@ source_downloads
 .vscode/
 
 # develop
+mysql-test/var-all_default_valgrind
 build/
