@@ -1,0 +1,329 @@
+show global variables like '%powers%';
+Variable_name	Value
+separation_of_powers_start	ON
+set global log_output='FILE,TABLE';
+set global general_log=1;
+create user 'boss'@'%' identified by '123';
+create user 'zhangsan'@'%' identified by '123';
+start abac;
+shutdown abac;
+start abac;
+create abac policy ('before_ABAC','zhangsan@%','company.kejibu','table', 8,'level',"'normal'",'>','AttValConstVal',28,null,'false');
+alter abac policy 'before_ABAC' enable;
+flush policy;
+show abac policies;
+subject	object	obj_typ	operation	policy_name	policy_id	att_name	const_val	operator	tag	sub_att	obj_att	policy_enable
+any	any	any	0	default_level	1	level	NULL	>=	AttValAttval	NULL	NULL	1
+any	any	any	0	default_domain	2	domain	NULL	contain	AttValAttval	NULL	NULL	1
+any	mysql.user	table	8	default_user1	3	level	NULL	>	AttValAttval	NULL	NULL	1
+any	mysql.user	table	4	default_user2	4	level	NULL	>	AttValAttval	NULL	NULL	1
+any	mysql.user	table	2	default_user3	5	level	NULL	>	AttValAttval	NULL	NULL	1
+zhangsan@%	company.kejibu	table	8	before_abac	6	level	'normal'	>	AttValConstVal	28	NULL	1
+alter abac policy 'before_ABAC' disable;
+drop abac policy 'before_ABAC';
+create abac domain 'company';
+create abac domain 'kejibu';
+show abac domains;
+domain_name
+admin
+audit
+company
+kejibu
+mysql
+root
+sec
+create abac domain relation 'company' to 'root';
+create abac domain relation 'kejibu' to 'company';
+show abac domain relations;
+domain_h	domain_l	domain_relation_id
+root	mysql	1
+root	admin	2
+root	sec	3
+root	audit	4
+root	company	5
+company	kejibu	6
+grant abac domain 'company' to 'boss@%';
+grant abac domain 'company' to 'company';
+grant abac domain 'kejibu' to 'company.kejibu';
+show abac domain on 'boss@%';
+object	att_name	attribute_value	attribute_manager_id
+boss@%	domain	company	32
+show abac domain on 'company';
+object	att_name	attribute_value	attribute_manager_id
+company	domain	company	33
+show abac domain on 'company' in 'kejibu';
+object	att_name	attribute_value	attribute_manager_id
+company.kejibu	domain	kejibu	34
+revoke abac attribute ('domain', 'company') from 'boss@%';
+revoke abac attribute ('domain', 'company') from 'company';
+revoke abac attribute ('domain', 'kejibu') from 'company.kejibu';
+drop abac domain relation 'kejibu' from 'company';
+drop abac domain relation 'company' from 'root';
+drop abac domain 'kejibu';
+drop abac domain 'company';
+create abac level 'lowest';
+show abac levels;
+level_name
+high
+highest
+low
+lowest
+normal
+create abac level relation 'lowest' to 'low';
+show abac level relations;
+level_h	level_l	level_relation_id
+highest	high	1
+high	normal	2
+normal	low	3
+low	lowest	4
+grant abac level 'lowest' to 'company';
+grant abac level 'lowest' to 'company.kejibu';
+grant abac level 'low' to 'boss@%';
+show abac level on 'boss@%';
+object	att_name	attribute_value	attribute_manager_id
+boss@%	level	low	37
+show abac level on 'company';
+object	att_name	attribute_value	attribute_manager_id
+company	level	lowest	35
+show abac level on 'company' in 'kejibu';
+object	att_name	attribute_value	attribute_manager_id
+company.kejibu	level	lowest	36
+revoke abac attribute ('level', 'low') from 'boss@%';
+revoke abac attribute ('level', 'lowest') from 'company';
+revoke abac attribute ('level', 'lowest') from 'company.kejibu';
+drop abac level relation 'lowest' from 'low';
+drop abac level 'lowest';
+create abac attribute (9,'JobLevel','int');
+show abac attributes;
+id	att_name	type
+1	level	string
+2	domain	set
+3	ip	string
+4	time	string
+5	date	string
+6	weekday	string
+9	joblevel	int
+grant abac attribute ('JobLevel', '1') to 'boss@%';
+show abac attributes_manager;
+object	att_name	attribute_value	attribute_manager_id
+admin@%	domain	admin	22
+admin@%	domain	mysql	23
+admin@%	level	high	21
+auditor@%	domain	audit	28
+auditor@%	domain	mysql	29
+auditor@%	level	high	27
+audit_log	domain	audit	18
+audit_log	level	high	17
+boss@%	joblevel	1	38
+mysql	domain	mysql	2
+mysql	level	high	1
+mysql.abac_attributes	domain	sec	12
+mysql.abac_attributes	level	high	11
+mysql.abac_attribute_manager	domain	sec	14
+mysql.abac_attribute_manager	level	high	13
+mysql.abac_domain_sec	domain	sec	9
+mysql.abac_domain_sec	level	high	5
+mysql.abac_domain_sec_poset	domain	sec	10
+mysql.abac_domain_sec_poset	level	high	6
+mysql.abac_level_sec	domain	sec	7
+mysql.abac_level_sec	level	high	3
+mysql.abac_level_sec_poset	domain	sec	8
+mysql.abac_level_sec_poset	level	high	4
+mysql.abac_policies	domain	sec	16
+mysql.abac_policies	level	high	15
+mysql.general_log	domain	audit	20
+mysql.general_log	level	high	19
+root@localhost	domain	root	31
+root@localhost	level	highest	30
+supervisor@%	domain	mysql	26
+supervisor@%	domain	sec	25
+supervisor@%	level	highest	24
+revoke abac attribute ('JobLevel', '1') from 'boss@%';
+drop abac attribute 'JobLevel';
+select * from mysql.abac_attribute_manager;
+object	att_name	attribute_value	attribute_manager_id
+admin@%	domain	admin	22
+admin@%	domain	mysql	23
+admin@%	level	high	21
+auditor@%	domain	audit	28
+auditor@%	domain	mysql	29
+auditor@%	level	high	27
+audit_log	domain	audit	18
+audit_log	level	high	17
+mysql	domain	mysql	2
+mysql	level	high	1
+mysql.abac_attributes	domain	sec	12
+mysql.abac_attributes	level	high	11
+mysql.abac_attribute_manager	domain	sec	14
+mysql.abac_attribute_manager	level	high	13
+mysql.abac_domain_sec	domain	sec	9
+mysql.abac_domain_sec	level	high	5
+mysql.abac_domain_sec_poset	domain	sec	10
+mysql.abac_domain_sec_poset	level	high	6
+mysql.abac_level_sec	domain	sec	7
+mysql.abac_level_sec	level	high	3
+mysql.abac_level_sec_poset	domain	sec	8
+mysql.abac_level_sec_poset	level	high	4
+mysql.abac_policies	domain	sec	16
+mysql.abac_policies	level	high	15
+mysql.general_log	domain	audit	20
+mysql.general_log	level	high	19
+root@localhost	domain	root	31
+root@localhost	level	highest	30
+supervisor@%	domain	mysql	26
+supervisor@%	domain	sec	25
+supervisor@%	level	highest	24
+select * from mysql.abac_attributes;
+id	att_name	type
+1	level	string
+2	domain	set
+3	ip	string
+4	time	string
+5	date	string
+6	weekday	string
+select * from mysql.abac_domain_sec;
+domain_name
+admin
+audit
+mysql
+root
+sec
+select * from mysql.abac_domain_sec_poset;
+domain_h	domain_l	domain_relation_id
+root	mysql	1
+root	admin	2
+root	sec	3
+root	audit	4
+select * from mysql.abac_level_sec;
+level_name
+high
+highest
+low
+normal
+select * from mysql.abac_level_sec_poset;
+level_h	level_l	level_relation_id
+highest	high	1
+high	normal	2
+normal	low	3
+select * from mysql.abac_policies;
+subject	object	obj_typ	operation	policy_name	policy_id	att_name	const_val	operator	tag	sub_att	obj_att	policy_enable
+any	any	any	0	default_level	1	level	NULL	>=	AttValAttval	NULL	NULL	1
+any	any	any	0	default_domain	2	domain	NULL	contain	AttValAttval	NULL	NULL	1
+any	mysql.user	table	8	default_user1	3	level	NULL	>	AttValAttval	NULL	NULL	1
+any	mysql.user	table	4	default_user2	4	level	NULL	>	AttValAttval	NULL	NULL	1
+any	mysql.user	table	2	default_user3	5	level	NULL	>	AttValAttval	NULL	NULL	1
+insert into mysql.abac_attribute_manager(object,att_name,attribute_value) values ('testobject','level','high');
+update mysql.abac_attribute_manager set attribute_value = 'low' where object = 'testobject' and att_name='level';
+delete from mysql.abac_attribute_manager where object = 'testobject' and att_name='level';
+insert into mysql.abac_attributes(att_name, type) values('testatt','string');
+update mysql.abac_attributes set att_name='testatt2' where att_name = 'testatt' and type = 'string';
+delete from mysql.abac_attributes where att_name = 'testatt2' and type = 'string';
+insert into mysql.abac_domain_sec values('testdomain');
+insert into mysql.abac_domain_sec values('testdomain1');
+update mysql.abac_domain_sec set domain_name = 'testdomain2' where domain_name = 'testdomain';
+insert into mysql.abac_domain_sec_poset(domain_h,domain_l) values ('root','testdomain2');
+update mysql.abac_domain_sec_poset set domain_l = 'testdomain1' where domain_h = 'root' and domain_l = 'testdomain2';
+delete from mysql.abac_domain_sec_poset where domain_h = 'root' and domain_l = 'testdomain1';
+delete from mysql.abac_domain_sec where domain_name = 'testdomain1';
+delete from mysql.abac_domain_sec where domain_name = 'testdomain2';
+insert into mysql.abac_level_sec values('testlevel');
+insert into mysql.abac_level_sec values('testlevel1');
+update mysql.abac_level_sec set level_name = 'testlevel2' where level_name = 'testlevel';
+insert into mysql.abac_level_sec_poset(level_h,level_l) values ('low','testlevel2');
+update mysql.abac_level_sec_poset set level_l = 'testlevel1' where level_h = 'low' and level_l = 'testlevel2';
+delete from mysql.abac_level_sec_poset where level_h = 'low' and level_l = 'testlevel1';
+delete from mysql.abac_level_sec where level_name = 'testlevel1';
+delete from mysql.abac_level_sec where level_name = 'testlevel2';
+insert into mysql.abac_policies(subject,object,obj_typ,operation,policy_name,att_name,const_val,operator,tag,sub_att,obj_att,policy_enable)
+values('any','any','any', 0,'testpolicy','level',null,'>=','AttValAttval',null,null,true);
+update mysql.abac_policies set policy_enable = false where policy_name = 'testpolicy';
+delete from mysql.abac_policies where policy_name = 'testpolicy';
+alter user supervisor@'%' identified by '';
+select * from mysql.user;
+ERROR 42000: SELECT command denied to user 'supervisor'@'localhost' for table 'user'
+select * from mysql.general_log;
+ERROR 42000: SELECT command denied to user 'supervisor'@'localhost' for table 'general_log'
+alter user admin@'%' identified by '123456';
+ERROR 42000: Operation denied due to the separation of powers.
+alter user auditor@'%' identified by '123456';
+ERROR 42000: Operation denied due to the separation of powers.
+drop user admin@'%';
+Got one of the listed errors
+drop user auditor@'%';
+Got one of the listed errors
+create user testuser@'%' identified by '123456';
+alter user testuser@'%' identified by '12345';
+grant select on *.* to testuser@'%';
+revoke select on *.* from testuser@'%';
+drop user testuser@'%';
+create database company;
+create table company.kejibu(id varchar(10) primary key,name varchar(20));
+create table company.secret(id varchar(10) primary key,info varchar(20));
+grant all privileges on company.* to supervisor@'%';
+revoke all privileges on company.* from supervisor@'%';
+grant all privileges on company.* to auditor@'%';
+revoke all privileges on company.* from auditor@'%';
+drop database company;
+alter user admin@'%' identified by '';
+alter user supervisor@'%' identified by '123456';
+ERROR 42000: Operation denied due to the separation of powers.
+rename user supervisor@'%' to supervisor1@'%';
+ERROR 42000: Operation denied due to the separation of powers.
+drop user supervisor@'%';
+Got one of the listed errors
+alter user auditor@'%' identified by '123456';
+ERROR 42000: Operation denied due to the separation of powers.
+rename user auditor@'%' to auditor1@'%';
+ERROR 42000: Operation denied due to the separation of powers.
+drop user auditor@'%';
+Got one of the listed errors
+show abac attributes;
+ERROR 42000: SELECT command denied to user 'admin'@'localhost' for table 'abac_attributes'
+show abac domains;
+result
+access denied
+Warnings:
+Error	1142	SELECT command denied to user 'admin'@'localhost' for table 'abac_attributes'
+show abac levels;
+result
+access denied
+show abac attributes_manager;
+ERROR 42000: SELECT command denied to user 'admin'@'localhost' for table 'abac_attribute_manager'
+show abac policies;
+ERROR 42000: SELECT command denied to user 'admin'@'localhost' for table 'abac_policies'
+grant abac level 'high' to 'zhangsan@%';
+ERROR 42000: INSERT command denied to user 'admin'@'localhost' for table 'abac_attribute_manager'
+grant abac domain 'mysql' to 'zhangsan@%';
+ERROR 42000: INSERT command denied to user 'admin'@'localhost' for table 'abac_attribute_manager'
+grant abac attribute ('level', 'low') to 'zhangsan@%';
+ERROR 42000: INSERT command denied to user 'admin'@'localhost' for table 'abac_attribute_manager'
+create abac policy ('zhangsan_level10','zhangsan@%','company.kejibu','table', 0,'level',"null",'!=','AttValAttVal',null,null,'false');
+ERROR 42000: INSERT command denied to user 'admin'@'localhost' for table 'abac_policies'
+revoke abac attribute ('level', 'high') from 'auditor@%';
+ERROR 42000: DELETE command denied to user 'admin'@'localhost' for table 'abac_attribute_manager'
+select * from mysql.abac_attribute_manager;
+ERROR 42000: SELECT command denied to user 'admin'@'localhost' for table 'abac_attribute_manager'
+select * from mysql.abac_policies;
+ERROR 42000: SELECT command denied to user 'admin'@'localhost' for table 'abac_policies'
+delete from mysql.abac_attribute_manager where object = 'audit_log';
+ERROR 42000: DELETE command denied to user 'admin'@'localhost' for table 'abac_attribute_manager'
+delete from mysql.abac_policies where policy_name = 'default_level';
+ERROR 42000: DELETE command denied to user 'admin'@'localhost' for table 'abac_policies'
+select count(*) from mysql.general_log;
+ERROR 42000: SELECT command denied to user 'admin'@'localhost' for table 'general_log'
+truncate table mysql.general_log;
+ERROR 42000: DROP command denied to user 'admin'@'localhost' for table 'general_log'
+select count(*) from mysql.general_log;
+count(*)
+130
+truncate table mysql.general_log;
+alter user auditor@'%' identified by '';
+alter user admin@'%' identified by '123456';
+ERROR 42000: Operation denied due to the separation of powers.
+alter user supervisor@'%' identified by '123456';
+ERROR 42000: Operation denied due to the separation of powers.
+set global general_log=1;
+drop user 'boss'@'%';
+drop user 'zhangsan'@'%';
+set global log_output='FILE';
+truncate table mysql.general_log;

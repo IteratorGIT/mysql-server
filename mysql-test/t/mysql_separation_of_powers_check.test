@@ -1,0 +1,242 @@
+# This test is to check various cases of separation of powers
+# with and without access of tables, with and without access of columns
+connection default;
+
+show global variables like '%powers%';
+set global log_output='FILE,TABLE';
+set global general_log=1;
+
+create user 'boss'@'%' identified by '123';
+create user 'zhangsan'@'%' identified by '123';
+
+# 开启abac
+connect (con_supervisor,127.0.0.1,supervisor,,mysql);
+start abac;
+
+# 测试supervisor
+shutdown abac;
+start abac;
+
+# can：自定义命令
+#policy相关
+create abac policy ('before_ABAC','zhangsan@%','company.kejibu','table', 8,'level',"'normal'",'>','AttValConstVal',28,null,'false');
+alter abac policy 'before_ABAC' enable;
+flush policy;
+show abac policies;
+alter abac policy 'before_ABAC' disable;
+drop abac policy 'before_ABAC';
+
+#attribute domain相关
+create abac domain 'company';
+create abac domain 'kejibu';
+show abac domains;
+create abac domain relation 'company' to 'root'; 
+create abac domain relation 'kejibu' to 'company'; 
+show abac domain relations;
+grant abac domain 'company' to 'boss@%';
+grant abac domain 'company' to 'company';
+grant abac domain 'kejibu' to 'company.kejibu';
+show abac domain on 'boss@%';
+show abac domain on 'company';
+show abac domain on 'company' in 'kejibu';
+revoke abac attribute ('domain', 'company') from 'boss@%';
+revoke abac attribute ('domain', 'company') from 'company';
+revoke abac attribute ('domain', 'kejibu') from 'company.kejibu';
+drop abac domain relation 'kejibu' from 'company';
+drop abac domain relation 'company' from 'root';
+drop abac domain 'kejibu';
+drop abac domain 'company';
+
+#attribute level相关
+create abac level 'lowest';
+show abac levels;
+create abac level relation 'lowest' to 'low'; 
+show abac level relations;
+grant abac level 'lowest' to 'company';
+grant abac level 'lowest' to 'company.kejibu';
+grant abac level 'low' to 'boss@%';
+show abac level on 'boss@%';
+show abac level on 'company';
+show abac level on 'company' in 'kejibu';
+revoke abac attribute ('level', 'low') from 'boss@%';
+revoke abac attribute ('level', 'lowest') from 'company';
+revoke abac attribute ('level', 'lowest') from 'company.kejibu';
+drop abac level relation 'lowest' from 'low';
+drop abac level 'lowest';
+
+#attribute 自定义属性相关
+create abac attribute (9,'JobLevel','int');
+show abac attributes;
+grant abac attribute ('JobLevel', '1') to 'boss@%';
+show abac attributes_manager;
+revoke abac attribute ('JobLevel', '1') from 'boss@%';
+drop abac attribute 'JobLevel';
+
+# can：直接访问abac系统表
+select * from mysql.abac_attribute_manager;
+select * from mysql.abac_attributes;
+select * from mysql.abac_domain_sec;
+select * from mysql.abac_domain_sec_poset;
+select * from mysql.abac_level_sec;
+select * from mysql.abac_level_sec_poset;
+select * from mysql.abac_policies;
+insert into mysql.abac_attribute_manager(object,att_name,attribute_value) values ('testobject','level','high');
+update mysql.abac_attribute_manager set attribute_value = 'low' where object = 'testobject' and att_name='level';
+delete from mysql.abac_attribute_manager where object = 'testobject' and att_name='level';
+insert into mysql.abac_attributes(att_name, type) values('testatt','string');
+update mysql.abac_attributes set att_name='testatt2' where att_name = 'testatt' and type = 'string';
+delete from mysql.abac_attributes where att_name = 'testatt2' and type = 'string';
+
+insert into mysql.abac_domain_sec values('testdomain');
+insert into mysql.abac_domain_sec values('testdomain1');
+update mysql.abac_domain_sec set domain_name = 'testdomain2' where domain_name = 'testdomain';
+insert into mysql.abac_domain_sec_poset(domain_h,domain_l) values ('root','testdomain2');
+update mysql.abac_domain_sec_poset set domain_l = 'testdomain1' where domain_h = 'root' and domain_l = 'testdomain2';
+delete from mysql.abac_domain_sec_poset where domain_h = 'root' and domain_l = 'testdomain1';
+delete from mysql.abac_domain_sec where domain_name = 'testdomain1';
+delete from mysql.abac_domain_sec where domain_name = 'testdomain2';
+
+insert into mysql.abac_level_sec values('testlevel');
+insert into mysql.abac_level_sec values('testlevel1');
+update mysql.abac_level_sec set level_name = 'testlevel2' where level_name = 'testlevel';
+insert into mysql.abac_level_sec_poset(level_h,level_l) values ('low','testlevel2');
+update mysql.abac_level_sec_poset set level_l = 'testlevel1' where level_h = 'low' and level_l = 'testlevel2';
+delete from mysql.abac_level_sec_poset where level_h = 'low' and level_l = 'testlevel1';
+delete from mysql.abac_level_sec where level_name = 'testlevel1';
+delete from mysql.abac_level_sec where level_name = 'testlevel2';
+
+insert into mysql.abac_policies(subject,object,obj_typ,operation,policy_name,att_name,const_val,operator,tag,sub_att,obj_att,policy_enable)
+values('any','any','any', 0,'testpolicy','level',null,'>=','AttValAttval',null,null,true);
+update mysql.abac_policies set policy_enable = false where policy_name = 'testpolicy';
+delete from mysql.abac_policies where policy_name = 'testpolicy';
+
+# can:修改自己的密码
+# alter user supervisor@'%' identified by '';
+
+# cannot:访问其它系统表
+--error 1142
+select * from mysql.user;
+--error 1142
+select * from mysql.general_log;
+
+# cannot:修改admin用户或auditor
+#  ER_SEPARATION_OF_POWERS_DENIED_ERROR
+--error ER_SEPARATION_OF_POWERS_DENIED_ERROR
+alter user admin@'%' identified by '123456';
+#  ER_SEPARATION_OF_POWERS_DENIED_ERROR
+--error ER_SEPARATION_OF_POWERS_DENIED_ERROR
+alter user auditor@'%' identified by '123456';
+#  ER_SEPARATION_OF_POWERS_DENIED_ERROR
+--error 1227,ER_SEPARATION_OF_POWERS_DENIED_ERROR
+drop user admin@'%';
+#  ER_SEPARATION_OF_POWERS_DENIED_ERROR
+--error 1227,ER_SEPARATION_OF_POWERS_DENIED_ERROR
+drop user auditor@'%';
+
+
+connect (con_admin,127.0.0.1,admin,,mysql);
+
+# 测试admin
+# can:管理用户，自主访问控制
+create user testuser@'%' identified by '123456';
+alter user testuser@'%' identified by '12345';
+grant select on *.* to testuser@'%';
+revoke select on *.* from testuser@'%';
+drop user testuser@'%';
+
+# can: 对supervisor和auditor进行自主访问控制, 创建数据库表
+create database company;
+create table company.kejibu(id varchar(10) primary key,name varchar(20));
+create table company.secret(id varchar(10) primary key,info varchar(20));
+
+grant all privileges on company.* to supervisor@'%';
+revoke all privileges on company.* from supervisor@'%';
+grant all privileges on company.* to auditor@'%';
+revoke all privileges on company.* from auditor@'%';
+drop database company;
+
+# can:修改自己的密码
+# alter user admin@'%' identified by '';
+
+# cannot: 修改或删除supervisor/auditor
+--error ER_SEPARATION_OF_POWERS_DENIED_ERROR
+alter user supervisor@'%' identified by '123456';
+--error ER_SEPARATION_OF_POWERS_DENIED_ERROR
+rename user supervisor@'%' to supervisor1@'%';
+--error 1227,ER_SEPARATION_OF_POWERS_DENIED_ERROR
+drop user supervisor@'%';
+--error ER_SEPARATION_OF_POWERS_DENIED_ERROR
+alter user auditor@'%' identified by '123456';
+--error ER_SEPARATION_OF_POWERS_DENIED_ERROR
+rename user auditor@'%' to auditor1@'%';
+--error 1227,ER_SEPARATION_OF_POWERS_DENIED_ERROR
+drop user auditor@'%';
+
+# cannot: 访问abac系统表
+--error 1142
+show abac attributes;
+show abac domains;
+show abac levels;
+--error 1142
+show abac attributes_manager;
+--error 1142
+show abac policies;
+--error 1142
+grant abac level 'high' to 'zhangsan@%';
+--error 1142
+grant abac domain 'mysql' to 'zhangsan@%';
+--error 1142
+grant abac attribute ('level', 'low') to 'zhangsan@%';
+-- error 1142
+create abac policy ('zhangsan_level10','zhangsan@%','company.kejibu','table', 0,'level',"null",'!=','AttValAttVal',null,null,'false');
+--error 1142
+revoke abac attribute ('level', 'high') from 'auditor@%';
+--error 1142
+select * from mysql.abac_attribute_manager;
+--error 1142
+select * from mysql.abac_policies;
+--error 1142
+delete from mysql.abac_attribute_manager where object = 'audit_log';
+--error 1142
+delete from mysql.abac_policies where policy_name = 'default_level';
+
+# cannot: 访问日志表
+--error 1142
+select count(*) from mysql.general_log;
+--error 1142
+truncate table mysql.general_log;
+
+
+connect (con_auditor,127.0.0.1,auditor,,mysql);
+
+# 测试auditor
+# can: 访问日志表
+select count(*) from mysql.general_log;
+truncate table mysql.general_log;
+
+# can: 修改自己的密码
+# alter user auditor@'%' identified by '';
+
+# cannot: 修改admin用户或supervisor
+--error ER_SEPARATION_OF_POWERS_DENIED_ERROR
+alter user admin@'%' identified by '123456';
+--error ER_SEPARATION_OF_POWERS_DENIED_ERROR
+alter user supervisor@'%' identified by '123456';
+
+# 恢复状态
+disconnect con_supervisor;
+disconnect con_admin;
+disconnect con_auditor;
+connection default;
+
+set global general_log=1;
+drop user 'boss'@'%';
+drop user 'zhangsan'@'%';
+set global log_output='FILE';
+
+
+
+
+
+truncate table mysql.general_log;
+disconnect default;

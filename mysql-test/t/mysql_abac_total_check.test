@@ -55,6 +55,7 @@ start ABAC;
 #policy相关
 create abac policy ('before_ABAC','zhangsan@%','company.kejibu','table', 8,'level',"'normal'",'>','AttValConstVal',28,null,'false');
 alter abac policy 'before_ABAC' enable;
+flush policy;
 show abac policies;
 alter abac policy 'before_ABAC' disable;
 drop abac policy 'before_ABAC';
@@ -316,6 +317,7 @@ create abac policy ('zhangsan_time4','zhangsan@%','any','any', 0,'time',"'03:30:
 flush policy;
 #检查更新后的策略生效情况
 connection con_zhangsan_company;
+--replace_column 1 SECONDS
 select now();
 --error 1044
 select * from kejibu;
@@ -328,6 +330,7 @@ alter abac policy 'zhangsan_time4' disable;
 flush policy;
 #检查更新后的策略生效情况
 connection con_zhangsan_company;
+--replace_column 1 SECONDS
 select now();
 select * from kejibu;
 #为防止影响后续操做，删除对于时间限制的策略

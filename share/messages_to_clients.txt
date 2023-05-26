@@ -9652,7 +9652,7 @@ ER_DA_SSL_FIPS_MODE_ERROR
 ER_VALUE_OUT_OF_RANGE
   eng "%s=%llu is outside the valid range [%llu,%llu]. %llu will be used."
 
-ER_SEPARATION_OF_POWERS_DENIED_ERROR
+ER_SEPARATION_OF_POWERS_DENIED_ERROR 42000
   eng "Operation denied due to the separation of powers."
 
 #
