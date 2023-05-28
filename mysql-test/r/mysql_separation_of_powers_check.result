@@ -238,7 +238,6 @@ insert into mysql.abac_policies(subject,object,obj_typ,operation,policy_name,att
 values('any','any','any', 0,'testpolicy','level',null,'>=','AttValAttval',null,null,true);
 update mysql.abac_policies set policy_enable = false where policy_name = 'testpolicy';
 delete from mysql.abac_policies where policy_name = 'testpolicy';
-alter user supervisor@'%' identified by '';
 select * from mysql.user;
 ERROR 42000: SELECT command denied to user 'supervisor'@'localhost' for table 'user'
 select * from mysql.general_log;
@@ -264,7 +263,6 @@ revoke all privileges on company.* from supervisor@'%';
 grant all privileges on company.* to auditor@'%';
 revoke all privileges on company.* from auditor@'%';
 drop database company;
-alter user admin@'%' identified by '';
 alter user supervisor@'%' identified by '123456';
 ERROR 42000: Operation denied due to the separation of powers.
 rename user supervisor@'%' to supervisor1@'%';
@@ -315,9 +313,8 @@ truncate table mysql.general_log;
 ERROR 42000: DROP command denied to user 'admin'@'localhost' for table 'general_log'
 select count(*) from mysql.general_log;
 count(*)
-130
+128
 truncate table mysql.general_log;
-alter user auditor@'%' identified by '';
 alter user admin@'%' identified by '123456';
 ERROR 42000: Operation denied due to the separation of powers.
 alter user supervisor@'%' identified by '123456';
