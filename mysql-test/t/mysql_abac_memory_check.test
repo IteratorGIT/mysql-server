@@ -8,11 +8,18 @@ use mysql;
 use mysql;
 use mysql;
 
+--replace_column 1 SECONDS
 select * from user;
+--replace_column 1 SECONDS
 select * from user;
+--replace_column 1 SECONDS
 select * from user;
+--replace_column 1 SECONDS
 select * from user;
+--replace_column 1 SECONDS
 select * from user;
+--replace_column 1 SECONDS
 select * from user;
+--replace_column 1 SECONDS
 select * from user;
 
