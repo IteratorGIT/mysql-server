@@ -79,6 +79,9 @@ bool delete_level(const char* level_h, uint len_h,const char* level, uint len);
  ********************************************/
 bool delete_domain(const char* domain, uint len);
 
-bool have_init();
+//初始化domain和level对应的数据结构，并非初始化数据
+void init_domain_and_level();
+//关闭abac后，销毁对应数据结构
+void drop_domain_and_level();
 
 #endif		//SEC_SIGN_H

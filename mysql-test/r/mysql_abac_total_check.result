@@ -144,12 +144,15 @@ id	att_name	type
 grant abac attribute ('JobLevel', '1') to 'boss@%';
 show abac attributes_manager;
 object	att_name	attribute_value	attribute_manager_id
-admin@%	domain	admin	22
-admin@%	domain	mysql	23
-admin@%	level	high	21
-auditor@%	domain	audit	28
-auditor@%	domain	mysql	29
-auditor@%	level	high	27
+abac_admin@%	domain	admin	22
+abac_admin@%	domain	mysql	23
+abac_admin@%	level	high	21
+abac_auditor@%	domain	audit	28
+abac_auditor@%	domain	mysql	29
+abac_auditor@%	level	high	27
+abac_supervisor@%	domain	mysql	26
+abac_supervisor@%	domain	sec	25
+abac_supervisor@%	level	highest	24
 audit_log	domain	audit	18
 audit_log	level	high	17
 boss@%	joblevel	1	38
@@ -173,9 +176,6 @@ mysql.general_log	domain	audit	20
 mysql.general_log	level	high	19
 root@localhost	domain	root	31
 root@localhost	level	highest	30
-supervisor@%	domain	mysql	26
-supervisor@%	domain	sec	25
-supervisor@%	level	highest	24
 revoke abac attribute ('JobLevel', '1') from 'boss@%';
 drop abac attribute 'JobLevel';
 create abac domain 'company';
@@ -288,12 +288,15 @@ id	att_name	type
 7	joblevel	int
 show abac attributes_manager;
 object	att_name	attribute_value	attribute_manager_id
-admin@%	domain	admin	22
-admin@%	domain	mysql	23
-admin@%	level	high	21
-auditor@%	domain	audit	28
-auditor@%	domain	mysql	29
-auditor@%	level	high	27
+abac_admin@%	domain	admin	22
+abac_admin@%	domain	mysql	23
+abac_admin@%	level	high	21
+abac_auditor@%	domain	audit	28
+abac_auditor@%	domain	mysql	29
+abac_auditor@%	level	high	27
+abac_supervisor@%	domain	mysql	26
+abac_supervisor@%	domain	sec	25
+abac_supervisor@%	level	highest	24
 audit_log	domain	audit	18
 audit_log	level	high	17
 boss@%	domain	company	47
@@ -328,9 +331,6 @@ mysql.general_log	domain	audit	20
 mysql.general_log	level	high	19
 root@localhost	domain	root	31
 root@localhost	level	highest	30
-supervisor@%	domain	mysql	26
-supervisor@%	domain	sec	25
-supervisor@%	level	highest	24
 zhangsan@%	domain	kejibu	48
 zhangsan@%	joblevel	3	54
 zhangsan@%	level	low	40

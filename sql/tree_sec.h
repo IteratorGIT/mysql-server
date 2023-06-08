@@ -80,12 +80,14 @@ public:
 	bool isFather(TREE_PTR father, TREE_PTR son);
 	TREE_PTR create_node(const char* data, uint len);
 	bool empty(){return !root;}
+	// 清除整棵树
+	void drop_tree();
 
 private:
 	TREE_PTR search(TREE_PTR root,const char* domain, uint len);
 	//??????????????????
 	int memcmp(const char* ch1, uint len1, const char* ch2, uint len2 );
-
+	void drop_tree(TREE_PTR node);
 	
 };
 

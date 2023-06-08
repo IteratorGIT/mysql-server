@@ -10,10 +10,10 @@ create user 'boss'@'%' identified by '123';
 create user 'zhangsan'@'%' identified by '123';
 
 # 开启abac
-connect (con_supervisor,127.0.0.1,supervisor,,mysql);
+connect (con_abac_supervisor,127.0.0.1,abac_supervisor,,mysql);
 start abac;
 
-# 测试supervisor
+# 测试abac_supervisor
 shutdown abac;
 start abac;
 
@@ -111,7 +111,7 @@ update mysql.abac_policies set policy_enable = false where policy_name = 'testpo
 delete from mysql.abac_policies where policy_name = 'testpolicy';
 
 # can:修改自己的密码
-# alter user supervisor@'%' identified by '';
+# alter user abac_supervisor@'%' identified by '';
 
 # cannot:访问其它系统表
 --error 1142
@@ -119,24 +119,24 @@ select * from mysql.user;
 --error 1142
 select * from mysql.general_log;
 
-# cannot:修改admin用户或auditor
+# cannot:修改abac_admin用户或abac_auditor
 #  ER_SEPARATION_OF_POWERS_DENIED_ERROR
 --error ER_SEPARATION_OF_POWERS_DENIED_ERROR
-alter user admin@'%' identified by '123456';
+alter user abac_admin@'%' identified by '123456';
 #  ER_SEPARATION_OF_POWERS_DENIED_ERROR
 --error ER_SEPARATION_OF_POWERS_DENIED_ERROR
-alter user auditor@'%' identified by '123456';
+alter user abac_auditor@'%' identified by '123456';
 #  ER_SEPARATION_OF_POWERS_DENIED_ERROR
 --error 1227,ER_SEPARATION_OF_POWERS_DENIED_ERROR
-drop user admin@'%';
+drop user abac_admin@'%';
 #  ER_SEPARATION_OF_POWERS_DENIED_ERROR
 --error 1227,ER_SEPARATION_OF_POWERS_DENIED_ERROR
-drop user auditor@'%';
+drop user abac_auditor@'%';
 
 
-connect (con_admin,127.0.0.1,admin,,mysql);
+connect (con_abac_admin,127.0.0.1,abac_admin,,mysql);
 
-# 测试admin
+# 测试abac_admin
 # can:管理用户，自主访问控制
 create user testuser@'%' identified by '123456';
 alter user testuser@'%' identified by '12345';
@@ -144,33 +144,33 @@ grant select on *.* to testuser@'%';
 revoke select on *.* from testuser@'%';
 drop user testuser@'%';
 
-# can: 对supervisor和auditor进行自主访问控制, 创建数据库表
+# can: 对abac_supervisor和abac_auditor进行自主访问控制, 创建数据库表
 create database company;
 create table company.kejibu(id varchar(10) primary key,name varchar(20));
 create table company.secret(id varchar(10) primary key,info varchar(20));
 
-grant all privileges on company.* to supervisor@'%';
-revoke all privileges on company.* from supervisor@'%';
-grant all privileges on company.* to auditor@'%';
-revoke all privileges on company.* from auditor@'%';
+grant all privileges on company.* to abac_supervisor@'%';
+revoke all privileges on company.* from abac_supervisor@'%';
+grant all privileges on company.* to abac_auditor@'%';
+revoke all privileges on company.* from abac_auditor@'%';
 drop database company;
 
 # can:修改自己的密码
-# alter user admin@'%' identified by '';
+# alter user abac_admin@'%' identified by '';
 
-# cannot: 修改或删除supervisor/auditor
+# cannot: 修改或删除abac_supervisor/abac_auditor
 --error ER_SEPARATION_OF_POWERS_DENIED_ERROR
-alter user supervisor@'%' identified by '123456';
+alter user abac_supervisor@'%' identified by '123456';
 --error ER_SEPARATION_OF_POWERS_DENIED_ERROR
-rename user supervisor@'%' to supervisor1@'%';
+rename user abac_supervisor@'%' to abac_supervisor1@'%';
 --error 1227,ER_SEPARATION_OF_POWERS_DENIED_ERROR
-drop user supervisor@'%';
+drop user abac_supervisor@'%';
 --error ER_SEPARATION_OF_POWERS_DENIED_ERROR
-alter user auditor@'%' identified by '123456';
+alter user abac_auditor@'%' identified by '123456';
 --error ER_SEPARATION_OF_POWERS_DENIED_ERROR
-rename user auditor@'%' to auditor1@'%';
+rename user abac_auditor@'%' to abac_auditor1@'%';
 --error 1227,ER_SEPARATION_OF_POWERS_DENIED_ERROR
-drop user auditor@'%';
+drop user abac_auditor@'%';
 
 # cannot: 访问abac系统表
 --error 1142
@@ -190,7 +190,7 @@ grant abac attribute ('level', 'low') to 'zhangsan@%';
 -- error 1142
 create abac policy ('zhangsan_level10','zhangsan@%','company.kejibu','table', 0,'level',"null",'!=','AttValAttVal',null,null,'false');
 --error 1142
-revoke abac attribute ('level', 'high') from 'auditor@%';
+revoke abac attribute ('level', 'high') from 'abac_auditor@%';
 --error 1142
 select * from mysql.abac_attribute_manager;
 --error 1142
@@ -207,36 +207,33 @@ select count(*) from mysql.general_log;
 truncate table mysql.general_log;
 
 
-connect (con_auditor,127.0.0.1,auditor,,mysql);
+connect (con_abac_auditor,127.0.0.1,abac_auditor,,mysql);
 
-# 测试auditor
+# 测试abac_auditor
 # can: 访问日志表
 select count(*) from mysql.general_log;
 truncate table mysql.general_log;
 
 # can: 修改自己的密码
-# alter user auditor@'%' identified by '';
+# alter user abac_auditor@'%' identified by '';
 
-# cannot: 修改admin用户或supervisor
+# cannot: 修改abac_admin用户或abac_supervisor
 --error ER_SEPARATION_OF_POWERS_DENIED_ERROR
-alter user admin@'%' identified by '123456';
+alter user abac_admin@'%' identified by '123456';
 --error ER_SEPARATION_OF_POWERS_DENIED_ERROR
-alter user supervisor@'%' identified by '123456';
+alter user abac_supervisor@'%' identified by '123456';
 
 # 恢复状态
-disconnect con_supervisor;
-disconnect con_admin;
-disconnect con_auditor;
+disconnect con_abac_supervisor;
+disconnect con_abac_admin;
+disconnect con_abac_auditor;
 connection default;
 
 set global general_log=1;
 drop user 'boss'@'%';
 drop user 'zhangsan'@'%';
 set global log_output='FILE';
-
-
-
-
+shutdown abac;
 
 truncate table mysql.general_log;
 disconnect default;

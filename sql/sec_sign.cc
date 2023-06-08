@@ -2,9 +2,9 @@
 #include "stdlib.h"
 
 //新建链表
-Link *level_link = new Link();
+Link *level_link = NULL;
 //新建范畴树
-DomainTree *domain_tree = new DomainTree();
+DomainTree *domain_tree = NULL;
 
 
 int levelcmp(const char* level1, uint len1,
@@ -144,12 +144,19 @@ bool delete_domain(const char* domain, uint len)
 	return(domain_tree->Delete(temp_d));
 }
 
-
-bool have_init()
+void init_domain_and_level()
 {
-	if( !domain_tree->empty() || !level_link->empty() )
-		return true;
-	else
-		return false;
+	level_link = new Link();
+	domain_tree = new DomainTree();
 }
 
+void drop_domain_and_level()
+{
+	level_link->drop_link();
+	delete level_link;
+	level_link = NULL;
+	
+	domain_tree->drop_tree();
+	delete domain_tree;
+	domain_tree = NULL;
+}

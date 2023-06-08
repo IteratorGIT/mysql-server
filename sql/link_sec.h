@@ -131,6 +131,8 @@ public:
 	//比较两个字符串是否相同
 	int memcmp(const char* ch1, uint len1, const char* ch2, uint len2 );
 	bool empty(){return !num;}
+	// 清除整个链表
+	void drop_link();
 };
 
 #endif		//LEVEL_LINK_H

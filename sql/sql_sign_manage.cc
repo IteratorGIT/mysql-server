@@ -1285,17 +1285,17 @@ bool init_sign(THD *thd)
     string priv_user = thd->security_context()->priv_user().str;
     string priv_host = thd->security_context()->priv_host().str;
     string sub = priv_user + "@" + priv_host;
-    if ( sub != "supervisor@%" && sub != "root@localhost")
+    if ( sub != "abac_supervisor@%" && sub != "root@localhost")
     {
         send_access_deny(thd);  
         return false;
     }
 
-    if (have_init()){        
-        init = true;
+    if (init){        
         my_ok(thd);
         return false;
     }
+    init_domain_and_level();
 
     vector<BRIM> level_list, domain_list;
     if (!init_domain(thd, domain_list) || !init_level(thd, level_list))
@@ -2169,12 +2169,12 @@ int  close_abac(THD* thd)
     string priv_user = thd->security_context()->priv_user().str;
     string priv_host = thd->security_context()->priv_host().str;
     string sub = priv_user + "@" + priv_host;
-    if ( sub != "supervisor@%" && sub != "root@localhost")
+    if ( sub != "abac_supervisor@%" && sub != "root@localhost")
     {
         send_access_deny(thd);  
         return false;
     }
-    // if ( thd->security_context()->user().length != 10 || strncmp(thd->security_context()->user().str , "supervisor",10 ) !=0 ) { send_access_deny(thd);  return false; }
+    
     if( !init )
     {  
         my_ok(thd);
@@ -2182,6 +2182,7 @@ int  close_abac(THD* thd)
     }
     else 
     {
+        drop_domain_and_level();
         init = false;
         my_ok(thd);
         return false;
@@ -2205,9 +2206,9 @@ bool check_abac_access_alter(THD *thd, List<LEX_USER> &list)
     List_iterator<LEX_USER> user_list(list);
     LEX_USER *user;
     while ((user = user_list++) != nullptr) {
-        if (strcmp(user->user.str, "supervisor")==0 && strcmp(user->host.str,"%")==0 && sub != "supervisor@%" ||
-            strcmp(user->user.str, "auditor")==0 && strcmp(user->host.str,"%")==0 && sub != "auditor@%" ||
-            strcmp(user->user.str, "admin")==0 && strcmp(user->host.str,"%")==0 && sub != "admin@%" || 
+        if (strcmp(user->user.str, "abac_supervisor")==0 && strcmp(user->host.str,"%")==0 && sub != "abac_supervisor@%" ||
+            strcmp(user->user.str, "abac_auditor")==0 && strcmp(user->host.str,"%")==0 && sub != "abac_auditor@%" ||
+            strcmp(user->user.str, "abac_admin")==0 && strcmp(user->host.str,"%")==0 && sub != "abac_admin@%" || 
             strcmp(user->user.str, "root")==0 && strcmp(user->host.str,"localhost")==0 && sub != "root@localhost")
             {
                 if(super) return false;
@@ -2239,9 +2240,9 @@ bool check_abac_access(THD *thd, List<LEX_USER> &list)
             my_error(ER_UNKNOWN_ERROR, MYF(0), "You can't drop or rename the root@localhost user.");
             return true;
         }
-        if (strcmp(user->user.str, "supervisor")==0 && strcmp(user->host.str,"%")==0 ||
-            strcmp(user->user.str, "auditor")==0 && strcmp(user->host.str,"%")==0 ||
-            strcmp(user->user.str, "admin")==0 && strcmp(user->host.str,"%")==0 )
+        if (strcmp(user->user.str, "abac_supervisor")==0 && strcmp(user->host.str,"%")==0 ||
+            strcmp(user->user.str, "abac_auditor")==0 && strcmp(user->host.str,"%")==0 ||
+            strcmp(user->user.str, "abac_admin")==0 && strcmp(user->host.str,"%")==0 )
             {
                 if(super) return false;
                 my_error(ER_SEPARATION_OF_POWERS_DENIED_ERROR, MYF(0));
@@ -2267,6 +2268,9 @@ bool check_sign(THD *thd, LEX_CSTRING db)
     string h = sctx->priv_host().str;
     string sub = u + "@" + h;       //后续用sub代替u
     //end feat
+    if(sub == "root@localhost" || sub == "abac_supervisor@%"){
+        return false;
+    }
  
     string my_ip = "localhost";
     if (sctx->ip().str)
@@ -2332,6 +2336,9 @@ bool check_sign(THD *thd, LEX_CSTRING db, LEX_CSTRING table)
     string h = sctx->priv_host().str;
     string sub = u + "@" + h;       //后续用sub代替u
     //end feat
+    if(sub == "root@localhost" || sub == "abac_supervisor@%"){
+        return false;
+    }
 
     string my_ip = "localhost";
     if (sctx->ip().str)
@@ -2393,6 +2400,9 @@ bool check_sign(THD* thd, LEX_CSTRING db, LEX_CSTRING table, LEX_CSTRING col_nam
     string h = sctx->priv_host().str;
     string sub = u + "@" + h;       //后续用sub代替u
     //end feat
+    if(sub == "root@localhost" || sub == "abac_supervisor@%"){
+        return false;
+    }
 
     string my_ip = "localhost";
     if (sctx->ip().str)

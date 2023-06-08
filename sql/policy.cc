@@ -895,29 +895,6 @@ bool Compare_SET(TYPE& left,
     return result;
 }
 
-
-/**
- * @brief 确定属性应该作为什么类型的值进行处理 将实体对应的属性值赋予参数
- *        domain 有多个值是合法的 其余的有多个值就不合法
- * @return true 成功
- * @return false  失败
- */
-bool change_type(TYPE& type, vector<PATT>& list)
-{
-    if( list.size() )
-    {
-        type.typeNum = get_type_num( list[0]->att_type );  
-        // if( type.typeNum != 14 ) // 说明不是doamin 是其他的属性
-        // {
-        //     if( list.size() > 1) return false;  //其他属性有两个值 认为不合法
-        //     else if( list.size() == 1 )   
-        //         type.token = list[0]->att_value;
-        // }
-    }
-    else return false;
-    return true;
-}
-
 /**
  * @brief 给定主体+主体属性、客体+客体属性、运算符，判断逻辑表达式（主体.属性 操作符 客体.属性）是否成立，操作符一侧可以是常量
  * subject,object是具体当前状态下的主客体，
@@ -932,27 +909,14 @@ bool Compare(string subject, string object, string object_type, TYPE left, TYPE 
     VALUE_LIST list_left, list_right;
     list_left.typeNum = list_right.typeNum = -1;
     string att_name;
-    if( left.typeNum == 6 ) // left是subject.attr 
+    
+    //先考虑客体
+    if( left.typeNum == 7 )
     {
         att_name = left.token;
-		//将指定实体的对应属性 放入  list_left ,left.token即为属性名称
-        if(!search_att(subject, "user", left.token, list_left))   //主体没有属性 算不过
-            return false;
-        // //修改left的typeNum：  level(domain)==> string(10)   同时将属性的值从list_left中赋给list_left                                 
-        // bool res = change_type(left, list_left);
-        // if(res == false) return false;
-    }
-    else if( left.typeNum == 7 )
-    {
-        att_name = left.token;
+		//将指定实体的对应属性放入list_left ,left.token即为属性名称
         if(!search_att(object, object_type, left.token, list_left))   //客体没有属性，算通过
             return true;    
-    }
-    if( right.typeNum == 6 )
-    {
-        att_name = right.token;
-    	if(!search_att(subject, "user", right.token, list_right))
-            return false;
     }
     else if( right.typeNum == 7 )
     {
@@ -960,6 +924,21 @@ bool Compare(string subject, string object, string object_type, TYPE left, TYPE 
         if(!search_att(object, object_type, right.token, list_right))
             return true;
     }
+
+    //考虑主体
+    if( left.typeNum == 6 ) 
+    {
+        att_name = left.token;
+        if(!search_att(subject, "user", left.token, list_left))   //主体没有属性 算不过
+            return false;
+    }
+    else if( right.typeNum == 6 )
+    {
+        att_name = right.token;
+    	if(!search_att(subject, "user", right.token, list_right))
+            return false;
+    }
+    
     
     //以左为例，list_left存匹配到的属性项，left存可能的常量
     bool result = false;
@@ -981,73 +960,6 @@ bool Compare(string subject, string object, string object_type, TYPE left, TYPE 
     }
     return result;
 }
-// bool Compare(string subject, string object, string object_type, TYPE left, TYPE operate, TYPE right)
-// {
-//     vector<PATT> list_left, list_right;
-//     // att_name.clear();
-//     string att_name=""; 
-//     if( left.typeNum == 6 ) // left是subject.attr 
-//     {
-//         att_name = left.token; // 获取是密级 范畴 还是其他的用户自定义属性名
-//         //将指定实体的对应属性 放入  list_left (domain有多个 其他的就一个) 
-// 		search_att(subject, att_name, list_left);
-//         if(list_left.size() == 0)                //主体没有属性 算不过
-// 		    return false;
-//         //修改left的typeNum：  level(domain)==> string(10)   同时将属性的值从list_left中赋给list_left                                 
-//         bool res = change_type(left, list_left);
-//         if(res == false) return false;
-//     }
-//     else  if( right.typeNum == 6 )
-//     {
-//     	att_name = right.token;
-//         search_att(subject, att_name, list_right);
-// 		if(list_right.size() == 0)
-// 			return false;        
-//         bool res = change_type(right, list_right);
-//         if(res == false) return false;
-//     }
-
-//     if( right.typeNum == 7 )
-//     {
-//         att_name = right.token;
-//         search_att(object, object_type, att_name, list_right);
-// 		if(list_right.size() == 0)   //客体没有属性 算能过
-// 			return true;   
-
-//         bool res = change_type(right, list_right);
-//         if(res == false) return false;
-//     }
-//     else if( left.typeNum == 7 )
-//     {
-//     	att_name = left.token;
-//         search_att(object, object_type, att_name, list_left);
-//         if(list_left.size() == 0)
-//             return true;        
-//         bool res = change_type(left, list_left);
-//         if(res == false) return false;
-//     }
-
-//     bool result = false;
-//     switch(operate.typeNum)
-//     {
-//     case 1:
-//     case 2:
-//         result = Compare_SET(left, list_left, operate, right, list_right, att_name);
-//         break;
-//     case 5:   //like
-//         result = Compare_STRING(left, list_left, operate, right, list_right, att_name);
-//         break;
-//     case 18: //==
-//     case 20: //<
-//     case 21: //!= 
-//     case 22: //<=
-//     case 23: //>
-//     case 24: //>=
-//         result = base_operation(left, operate, right, att_name);
-//         break;
-//     }
-//     return result;
-// }
 
 int policy_decision(string subject,string object, PPOLICY policy,string s_ip)
 {

@@ -282,4 +282,16 @@ bool Link::isFather(LINK_PTR father, LINK_PTR son)
 	return false;
 }
 
+void Link::drop_link()
+{
+    LINK_PTR next;
+    for(; head != NULL; head = next )
+    {
+        next = head->child;
+        delete head;
+    }
+    tail = NULL;
+    num = 0;
+}
+
 

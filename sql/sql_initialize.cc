@@ -55,14 +55,14 @@ static const char *initialization_cmds[] = {"USE mysql;\n", nullptr};
 #define GENERATED_PASSWORD_LENGTH 12
 
 #define INSERT_USER_SUPERVISOR_CMD \
-  "CREATE USER supervisor@'%' IDENTIFIED BY '%s' PASSWORD EXPIRE;\n"
-#define INSERT_USER_SUPERVISOR_CMD_INSECURE "CREATE USER supervisor@'%';\n"
+  "CREATE USER abac_supervisor@'%' IDENTIFIED BY '%s' PASSWORD EXPIRE;\n"
+#define INSERT_USER_SUPERVISOR_CMD_INSECURE "CREATE USER abac_supervisor@'%';\n"
 #define INSERT_USER_ADMIN_CMD \
-  "CREATE USER admin@'%' IDENTIFIED BY '%s' PASSWORD EXPIRE;\n"
-#define INSERT_USER_ADMIN_CMD_INSECURE "CREATE USER admin@'%';\n"
+  "CREATE USER abac_admin@'%' IDENTIFIED BY '%s' PASSWORD EXPIRE;\n"
+#define INSERT_USER_ADMIN_CMD_INSECURE "CREATE USER abac_admin@'%';\n"
 #define INSERT_USER_AUDITOR_CMD \
-  "CREATE USER auditor@'%' IDENTIFIED BY '%s' PASSWORD EXPIRE;\n"
-#define INSERT_USER_AUDITOR_CMD_INSECURE "CREATE USER auditor@'%';\n"
+  "CREATE USER abac_auditor@'%' IDENTIFIED BY '%s' PASSWORD EXPIRE;\n"
+#define INSERT_USER_AUDITOR_CMD_INSECURE "CREATE USER abac_auditor@'%';\n"
 
 char
     insert_user_buffer[sizeof(INSERT_USER_CMD) + GENERATED_PASSWORD_LENGTH * 2];
@@ -83,22 +83,22 @@ static const char *initialization_data[] = {
     "GRANT ALL PRIVILEGES ON *.* TO root@localhost WITH GRANT OPTION;\n",
     "GRANT PROXY ON ''@'' TO 'root'@'localhost' WITH GRANT OPTION;\n",
     insert_user_supervisor_buffer, 
-    "GRANT GRANT OPTION ON *.* TO 'supervisor'@'%';\n",
-    "GRANT USAGE ON mysql.* TO 'supervisor'@'%';\n",
-    "GRANT ALL PRIVILEGES ON mysql.abac_level_sec TO 'supervisor'@'%';\n",
-    "GRANT ALL PRIVILEGES ON mysql.abac_domain_sec TO 'supervisor'@'%';\n",
-    "GRANT ALL PRIVILEGES ON mysql.abac_domain_sec_poset TO 'supervisor'@'%';\n",
-    "GRANT ALL PRIVILEGES ON mysql.abac_level_sec_poset TO 'supervisor'@'%';\n",
-    "GRANT ALL PRIVILEGES ON mysql.abac_attributes TO 'supervisor'@'%';\n",
-    "GRANT ALL PRIVILEGES ON mysql.abac_attribute_manager TO 'supervisor'@'%';\n",
-    "GRANT ALL PRIVILEGES ON mysql.abac_policies TO 'supervisor'@'%';\n",
+    "GRANT GRANT OPTION ON *.* TO 'abac_supervisor'@'%';\n",
+    "GRANT USAGE ON mysql.* TO 'abac_supervisor'@'%';\n",
+    "GRANT ALL PRIVILEGES ON mysql.abac_level_sec TO 'abac_supervisor'@'%';\n",
+    "GRANT ALL PRIVILEGES ON mysql.abac_domain_sec TO 'abac_supervisor'@'%';\n",
+    "GRANT ALL PRIVILEGES ON mysql.abac_domain_sec_poset TO 'abac_supervisor'@'%';\n",
+    "GRANT ALL PRIVILEGES ON mysql.abac_level_sec_poset TO 'abac_supervisor'@'%';\n",
+    "GRANT ALL PRIVILEGES ON mysql.abac_attributes TO 'abac_supervisor'@'%';\n",
+    "GRANT ALL PRIVILEGES ON mysql.abac_attribute_manager TO 'abac_supervisor'@'%';\n",
+    "GRANT ALL PRIVILEGES ON mysql.abac_policies TO 'abac_supervisor'@'%';\n",
     insert_user_admin_buffer,
-    "GRANT ALL PRIVILEGES ON *.* TO 'admin'@'%' WITH GRANT OPTION;\n",
+    "GRANT ALL PRIVILEGES ON *.* TO 'abac_admin'@'%' WITH GRANT OPTION;\n",
     insert_user_auditor_buffer,
-    "GRANT GRANT OPTION ON *.* TO 'auditor'@'%';\n",
-    "GRANT USAGE ON mysql.* TO 'auditor'@'%';\n",
-    "GRANT ALL PRIVILEGES ON audit_log.* TO 'auditor'@'%';\n",
-    "GRANT ALL PRIVILEGES ON mysql.general_log TO 'auditor'@'%';\n",
+    "GRANT GRANT OPTION ON *.* TO 'abac_auditor'@'%';\n",
+    "GRANT USAGE ON mysql.* TO 'abac_auditor'@'%';\n",
+    "GRANT ALL PRIVILEGES ON audit_log.* TO 'abac_auditor'@'%';\n",
+    "GRANT ALL PRIVILEGES ON mysql.general_log TO 'abac_auditor'@'%';\n",
     nullptr};
 
 static const char **cmds[] = {initialization_cmds, mysql_system_tables,

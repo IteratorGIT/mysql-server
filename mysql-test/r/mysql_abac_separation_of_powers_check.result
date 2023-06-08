@@ -106,12 +106,15 @@ id	att_name	type
 grant abac attribute ('JobLevel', '1') to 'boss@%';
 show abac attributes_manager;
 object	att_name	attribute_value	attribute_manager_id
-admin@%	domain	admin	22
-admin@%	domain	mysql	23
-admin@%	level	high	21
-auditor@%	domain	audit	28
-auditor@%	domain	mysql	29
-auditor@%	level	high	27
+abac_admin@%	domain	admin	22
+abac_admin@%	domain	mysql	23
+abac_admin@%	level	high	21
+abac_auditor@%	domain	audit	28
+abac_auditor@%	domain	mysql	29
+abac_auditor@%	level	high	27
+abac_supervisor@%	domain	mysql	26
+abac_supervisor@%	domain	sec	25
+abac_supervisor@%	level	highest	24
 audit_log	domain	audit	18
 audit_log	level	high	17
 boss@%	joblevel	1	38
@@ -135,19 +138,19 @@ mysql.general_log	domain	audit	20
 mysql.general_log	level	high	19
 root@localhost	domain	root	31
 root@localhost	level	highest	30
-supervisor@%	domain	mysql	26
-supervisor@%	domain	sec	25
-supervisor@%	level	highest	24
 revoke abac attribute ('JobLevel', '1') from 'boss@%';
 drop abac attribute 'JobLevel';
 select * from mysql.abac_attribute_manager;
 object	att_name	attribute_value	attribute_manager_id
-admin@%	domain	admin	22
-admin@%	domain	mysql	23
-admin@%	level	high	21
-auditor@%	domain	audit	28
-auditor@%	domain	mysql	29
-auditor@%	level	high	27
+abac_admin@%	domain	admin	22
+abac_admin@%	domain	mysql	23
+abac_admin@%	level	high	21
+abac_auditor@%	domain	audit	28
+abac_auditor@%	domain	mysql	29
+abac_auditor@%	level	high	27
+abac_supervisor@%	domain	mysql	26
+abac_supervisor@%	domain	sec	25
+abac_supervisor@%	level	highest	24
 audit_log	domain	audit	18
 audit_log	level	high	17
 mysql	domain	mysql	2
@@ -170,9 +173,6 @@ mysql.general_log	domain	audit	20
 mysql.general_log	level	high	19
 root@localhost	domain	root	31
 root@localhost	level	highest	30
-supervisor@%	domain	mysql	26
-supervisor@%	domain	sec	25
-supervisor@%	level	highest	24
 select * from mysql.abac_attributes;
 id	att_name	type
 1	level	string
@@ -239,16 +239,16 @@ values('any','any','any', 0,'testpolicy','level',null,'>=','AttValAttval',null,n
 update mysql.abac_policies set policy_enable = false where policy_name = 'testpolicy';
 delete from mysql.abac_policies where policy_name = 'testpolicy';
 select * from mysql.user;
-ERROR 42000: SELECT command denied to user 'supervisor'@'localhost' for table 'user'
+ERROR 42000: SELECT command denied to user 'abac_supervisor'@'localhost' for table 'user'
 select * from mysql.general_log;
-ERROR 42000: SELECT command denied to user 'supervisor'@'localhost' for table 'general_log'
-alter user admin@'%' identified by '123456';
+ERROR 42000: SELECT command denied to user 'abac_supervisor'@'localhost' for table 'general_log'
+alter user abac_admin@'%' identified by '123456';
 ERROR 42000: Operation denied due to the separation of powers.
-alter user auditor@'%' identified by '123456';
+alter user abac_auditor@'%' identified by '123456';
 ERROR 42000: Operation denied due to the separation of powers.
-drop user admin@'%';
+drop user abac_admin@'%';
 Got one of the listed errors
-drop user auditor@'%';
+drop user abac_auditor@'%';
 Got one of the listed errors
 create user testuser@'%' identified by '123456';
 alter user testuser@'%' identified by '12345';
@@ -258,69 +258,70 @@ drop user testuser@'%';
 create database company;
 create table company.kejibu(id varchar(10) primary key,name varchar(20));
 create table company.secret(id varchar(10) primary key,info varchar(20));
-grant all privileges on company.* to supervisor@'%';
-revoke all privileges on company.* from supervisor@'%';
-grant all privileges on company.* to auditor@'%';
-revoke all privileges on company.* from auditor@'%';
+grant all privileges on company.* to abac_supervisor@'%';
+revoke all privileges on company.* from abac_supervisor@'%';
+grant all privileges on company.* to abac_auditor@'%';
+revoke all privileges on company.* from abac_auditor@'%';
 drop database company;
-alter user supervisor@'%' identified by '123456';
+alter user abac_supervisor@'%' identified by '123456';
 ERROR 42000: Operation denied due to the separation of powers.
-rename user supervisor@'%' to supervisor1@'%';
+rename user abac_supervisor@'%' to abac_supervisor1@'%';
 ERROR 42000: Operation denied due to the separation of powers.
-drop user supervisor@'%';
+drop user abac_supervisor@'%';
 Got one of the listed errors
-alter user auditor@'%' identified by '123456';
+alter user abac_auditor@'%' identified by '123456';
 ERROR 42000: Operation denied due to the separation of powers.
-rename user auditor@'%' to auditor1@'%';
+rename user abac_auditor@'%' to abac_auditor1@'%';
 ERROR 42000: Operation denied due to the separation of powers.
-drop user auditor@'%';
+drop user abac_auditor@'%';
 Got one of the listed errors
 show abac attributes;
-ERROR 42000: SELECT command denied to user 'admin'@'localhost' for table 'abac_attributes'
+ERROR 42000: SELECT command denied to user 'abac_admin'@'localhost' for table 'abac_attributes'
 show abac domains;
 result
 access denied
 Warnings:
-Error	1142	SELECT command denied to user 'admin'@'localhost' for table 'abac_attributes'
+Error	1142	SELECT command denied to user 'abac_admin'@'localhost' for table 'abac_attributes'
 show abac levels;
 result
 access denied
 show abac attributes_manager;
-ERROR 42000: SELECT command denied to user 'admin'@'localhost' for table 'abac_attribute_manager'
+ERROR 42000: SELECT command denied to user 'abac_admin'@'localhost' for table 'abac_attribute_manager'
 show abac policies;
-ERROR 42000: SELECT command denied to user 'admin'@'localhost' for table 'abac_policies'
+ERROR 42000: SELECT command denied to user 'abac_admin'@'localhost' for table 'abac_policies'
 grant abac level 'high' to 'zhangsan@%';
-ERROR 42000: INSERT command denied to user 'admin'@'localhost' for table 'abac_attribute_manager'
+ERROR 42000: INSERT command denied to user 'abac_admin'@'localhost' for table 'abac_attribute_manager'
 grant abac domain 'mysql' to 'zhangsan@%';
-ERROR 42000: INSERT command denied to user 'admin'@'localhost' for table 'abac_attribute_manager'
+ERROR 42000: INSERT command denied to user 'abac_admin'@'localhost' for table 'abac_attribute_manager'
 grant abac attribute ('level', 'low') to 'zhangsan@%';
-ERROR 42000: INSERT command denied to user 'admin'@'localhost' for table 'abac_attribute_manager'
+ERROR 42000: INSERT command denied to user 'abac_admin'@'localhost' for table 'abac_attribute_manager'
 create abac policy ('zhangsan_level10','zhangsan@%','company.kejibu','table', 0,'level',"null",'!=','AttValAttVal',null,null,'false');
-ERROR 42000: INSERT command denied to user 'admin'@'localhost' for table 'abac_policies'
-revoke abac attribute ('level', 'high') from 'auditor@%';
-ERROR 42000: DELETE command denied to user 'admin'@'localhost' for table 'abac_attribute_manager'
+ERROR 42000: INSERT command denied to user 'abac_admin'@'localhost' for table 'abac_policies'
+revoke abac attribute ('level', 'high') from 'abac_auditor@%';
+ERROR 42000: DELETE command denied to user 'abac_admin'@'localhost' for table 'abac_attribute_manager'
 select * from mysql.abac_attribute_manager;
-ERROR 42000: SELECT command denied to user 'admin'@'localhost' for table 'abac_attribute_manager'
+ERROR 42000: SELECT command denied to user 'abac_admin'@'localhost' for table 'abac_attribute_manager'
 select * from mysql.abac_policies;
-ERROR 42000: SELECT command denied to user 'admin'@'localhost' for table 'abac_policies'
+ERROR 42000: SELECT command denied to user 'abac_admin'@'localhost' for table 'abac_policies'
 delete from mysql.abac_attribute_manager where object = 'audit_log';
-ERROR 42000: DELETE command denied to user 'admin'@'localhost' for table 'abac_attribute_manager'
+ERROR 42000: DELETE command denied to user 'abac_admin'@'localhost' for table 'abac_attribute_manager'
 delete from mysql.abac_policies where policy_name = 'default_level';
-ERROR 42000: DELETE command denied to user 'admin'@'localhost' for table 'abac_policies'
+ERROR 42000: DELETE command denied to user 'abac_admin'@'localhost' for table 'abac_policies'
 select count(*) from mysql.general_log;
-ERROR 42000: SELECT command denied to user 'admin'@'localhost' for table 'general_log'
+ERROR 42000: SELECT command denied to user 'abac_admin'@'localhost' for table 'general_log'
 truncate table mysql.general_log;
-ERROR 42000: DROP command denied to user 'admin'@'localhost' for table 'general_log'
+ERROR 42000: DROP command denied to user 'abac_admin'@'localhost' for table 'general_log'
 select count(*) from mysql.general_log;
 count(*)
 128
 truncate table mysql.general_log;
-alter user admin@'%' identified by '123456';
+alter user abac_admin@'%' identified by '123456';
 ERROR 42000: Operation denied due to the separation of powers.
-alter user supervisor@'%' identified by '123456';
+alter user abac_supervisor@'%' identified by '123456';
 ERROR 42000: Operation denied due to the separation of powers.
 set global general_log=1;
 drop user 'boss'@'%';
 drop user 'zhangsan'@'%';
 set global log_output='FILE';
+shutdown abac;
 truncate table mysql.general_log;

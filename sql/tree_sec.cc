@@ -179,3 +179,35 @@ TREE_PTR DomainTree::create_node(const char* data, uint len)
 	return node;
 }
 
+void DomainTree::drop_tree()
+{
+	if(root != NULL)
+		drop_tree(root);
+	return;
+}
+
+
+void DomainTree::drop_tree(TREE_PTR node)
+{
+	if(node->children != NULL)
+	{
+		Link* link = node->children;
+		if(link != NULL)
+		{
+			//遍历列表，删除每一项（如果该项有子节点则递归删除）
+			LINK_PTR item;
+			for(item = link->get_node(0); item != NULL; item = item->child)
+			{
+				if(item->is_node_ptr && item->u.node != NULL)
+				{
+					drop_tree(item->u.node);
+					item->u.node = NULL;
+				}
+			}
+			link->drop_link();
+		}
+		delete link;
+		
+	}
+	delete node;
+}
