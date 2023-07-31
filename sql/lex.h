@@ -63,6 +63,7 @@ static const SYMBOL symbols[] = {
     */
     {SYM("ABAC", ABAC_SYM)},
     {SYM("POLICY", POLICY_SYM)},
+    {SYM("CURRENT_ABE_USER_KEY", CURRENT_ABE_USER_KEY)},
 
     {SYM("&&", AND_AND_SYM)},
     {SYM("<", LT)},

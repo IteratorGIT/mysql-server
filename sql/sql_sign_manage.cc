@@ -90,6 +90,8 @@ enum CommandType {
     SHOW_POLICIES,
     ENABLE_POLICY,
     DISABLE_POLICY,
+    CREATE_USER_AND_ATT,
+    GRANT_ABE_ATT,
 
     END
 };
@@ -120,6 +122,10 @@ class SqlParser
         string ENABLE = "enable";
         string DISABLE = "disable";
 
+        string ABE = "abe";
+        string USER = "user";
+        string IDENTIFIED = "identified";
+        string BY = "by";
         string ABAC = "abac";
         string DOMAIN = "domain";
         string DOMAINS = "domains";
@@ -148,6 +154,11 @@ class SqlParser
         string RULE = "\"([\\s\\S]*)\"";        //常量字符串，双引号括起来，可以包含任意字符
         string NUMBER_OR_NULL = "(0|[1-9][0-9]*|null)";  //数字或者null
         string OPERATOR = "'([a-zA-Z>=<!]*)'";  //比较操作符，单引号括起来，合法字符有：大小写字母、大于号、等于号、小于号
+        string ABE_ATT_LIST = "'([\\w\\s\\|=]+)'"; //ABE中，用户的属性列表，可以通过|分隔各属性，并通过=为特定属性赋值
+        string USER_NAME = "['\"`]?(\\w+)['\"`]?"; //创建用户时的用户名
+        string AT = "@"; //用户名和主机号之间的符号
+        string USER_HOST = "['\"`]?([\\w\\.%]+)['\"`]?";   //创建用户时的主机号
+        string PASSWD = "['\"](.*)['\"]";
 
         // create abac domain relation 'domain_low' to 'domain_high'
         string create_domain_relation = CREATE + SPACE + ABAC + SPACE + DOMAIN + SPACE + RELATION + SPACE + VARIABLE + SPACE + TO + SPACE + VARIABLE;
@@ -252,6 +263,11 @@ class SqlParser
 
         // alter abac policy 'policy_name' disable
         string disable_policy = ALTER + SPACE + ABAC + SPACE + POLICY + SPACE + VARIABLE + SPACE + DISABLE;
+        
+
+        //abe相关命令：
+        string create_user_and_att = CREATE + SPACE + USER + SPACE + USER_NAME + AT + USER_HOST + SPACE + IDENTIFIED + SPACE + BY + SPACE + PASSWD + SPACE + ABE + SPACE + ABE_ATT_LIST;
+        string grant_abe_att = GRANT + SPACE + ABE + SPACE + ATTRIBUTE + SPACE + ABE_ATT_LIST + SPACE + TO + SPACE + USER_NAME + AT + USER_HOST;
 
         mp[CREATE_DOMAIN] = (SqlInfo){create_domain, 1};
         mp[CREATE_DOMAIN_RELATION] = (SqlInfo){create_domain_relation, 2};
@@ -285,6 +301,8 @@ class SqlParser
         mp[SHOW_POLICIES] = (SqlInfo){show_policies, 0};
         mp[ENABLE_POLICY] = (SqlInfo){enable_policy, 1};
         mp[DISABLE_POLICY] = (SqlInfo){disable_policy, 1};
+        mp[CREATE_USER_AND_ATT] = (SqlInfo){create_user_and_att, 4};
+        mp[GRANT_ABE_ATT] = (SqlInfo){grant_abe_att, 3};
 
         for (int i = BEGIN + 1; i < END; i++) {
             mp[i].regex_expression = SPACE_OR_EMPTY + mp[i].regex_expression + SPACE_OR_EMPTY;
@@ -349,7 +367,7 @@ class SqlParser
         //把字符串转换为小写
         transform(target.begin(), target.end(), target.begin(), ::tolower);
         //预检查，判断是否包含特殊关键字abac
-        if (target.find("abac") == string::npos) {
+        if (target.find("abac") == string::npos && target.find("abe") == string::npos) {
             return false;
         }
         for (int i = BEGIN + 1; i < END; i++) {
@@ -507,6 +525,14 @@ bool sqlParsing(THD* thd, COM_DATA com_data)
             return true;
         case DISABLE_POLICY:
             alter_policy_disable(thd,paramaters); //show policys
+            delete parser;
+            return true;
+        case CREATE_USER_AND_ATT:
+            create_user_and_att(thd, paramaters);
+            delete parser;
+            return true;
+        case GRANT_ABE_ATT:
+            grant_abe_att(thd, paramaters);
             delete parser;
             return true;
     }
@@ -2447,4 +2473,90 @@ bool check_sign(THD* thd, LEX_CSTRING db, LEX_CSTRING table, LEX_CSTRING col_nam
     return false;
 }
 
+bool create_user_and_att(THD *thd,vector<LEX_STRING>& paramaters)
+{
+    // if( !init )
+    // {
+    //     send_access_deny(thd);
+    //     reset_statement(thd);
+    //     return true;
+    // }
+    LEX_STRING user_name = paramaters[0];
+    LEX_STRING user_host = paramaters[1];
+    LEX_STRING passwd = paramaters[2];
+    LEX_STRING att_list = paramaters[3];
+    string command1 = "create user '";
+    command1 += user_name.str;
+    command1 += "'@'";
+    command1 += user_host.str;
+    command1 += "' identified by '";
+    command1 += passwd.str;
+    command1 += "'";
+    COM_DATA cmd1;
+    memset(&cmd1, 0, sizeof(cmd1));
+    
+    //char buf[200] ={0};
+    int len1 = command1.length()+5;
+    char *buf1 = new char[len1];
+    memset(buf1,0,len1);
+    
+    strcpy(buf1, command1.c_str());
+    cmd1.com_query.query = reinterpret_cast<const char *>(buf1);
+    cmd1.com_query.length = static_cast<unsigned int>(command1.length());
 
+    bool res1 =  dispatch_command(thd, &cmd1, COM_QUERY);
+    delete[] buf1;
+    if(!res1) return false;
+
+    string command2 = "insert into mysql.abe_attribute_manager(user, att) values('";
+    command2 += user_name.str;
+    command2 += "@";
+    command2 += user_host.str;
+    command2 += "','";
+    command2 += att_list.str;
+    command2 += "')";
+    COM_DATA cmd2;
+    memset(&cmd2, 0, sizeof(cmd2));
+    
+    //char buf[200] ={0};
+    int len2 = command2.length()+5;
+    char *buf2 = new char[len2];
+    memset(buf2,0,len2);
+    
+    strcpy(buf2, command2.c_str());
+    cmd2.com_query.query = reinterpret_cast<const char *>(buf2);
+    cmd2.com_query.length = static_cast<unsigned int>(command2.length());
+
+    bool res2 =  dispatch_command(thd, &cmd2, COM_QUERY);
+    delete[] buf2;
+    return res2;
+}
+
+bool grant_abe_att(THD *thd,vector<LEX_STRING>& paramaters)
+{
+    LEX_STRING att_list = paramaters[0];
+    LEX_STRING user_name = paramaters[1];
+    LEX_STRING user_host = paramaters[2];
+    string command2 = "insert into mysql.abe_attribute_manager(user, att) values('";
+    command2 += user_name.str;
+    command2 += "@";
+    command2 += user_host.str;
+    command2 += "','";
+    command2 += att_list.str;
+    command2 += "')";
+    COM_DATA cmd2;
+    memset(&cmd2, 0, sizeof(cmd2));
+    
+    //char buf[200] ={0};
+    int len2 = command2.length()+5;
+    char *buf2 = new char[len2];
+    memset(buf2,0,len2);
+    
+    strcpy(buf2, command2.c_str());
+    cmd2.com_query.query = reinterpret_cast<const char *>(buf2);
+    cmd2.com_query.length = static_cast<unsigned int>(command2.length());
+
+    bool res2 =  dispatch_command(thd, &cmd2, COM_QUERY);
+    delete[] buf2;
+    return res2;
+}

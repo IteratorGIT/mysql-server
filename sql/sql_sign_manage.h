@@ -91,5 +91,6 @@ bool check_abac_access_alter(THD *thd, List<LEX_USER> &list);
 bool check_sign(THD* thd, LEX_CSTRING db);
 bool check_sign(THD* thd, LEX_CSTRING db, LEX_CSTRING table);
 bool check_sign(THD* thd, LEX_CSTRING db, LEX_CSTRING table, LEX_CSTRING col_name);
-
+bool create_user_and_att(THD *thd,vector<LEX_STRING>& paramaters);
+bool grant_abe_att(THD *thd,vector<LEX_STRING>& paramaters);
 #endif //SQL_SIGN_MANAGE_H

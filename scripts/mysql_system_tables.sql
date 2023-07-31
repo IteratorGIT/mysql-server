@@ -585,6 +585,37 @@ CREATE TABLE IF NOT EXISTS abac_policies(
   foreign key(obj_att) references abac_attribute_manager(attribute_manager_id))
 	ENGINE=InnoDB CHARACTER SET=utf8 COLLATE=utf8_general_ci;
 
+CREATE TABLE IF NOT EXISTS abe_attribute(
+  id int auto_increment primary key,
+  att_name varchar(60) not null,
+	att_type varchar(60) not null,
+  unique(att_name)
+)ENGINE=InnoDB CHARACTER SET=utf8 COLLATE=utf8_general_ci;
+
+CREATE TABLE IF NOT EXISTS abe_attribute_manager(
+  id int auto_increment primary key,
+  user varchar(60) not null,
+  att varchar(600) not null,
+  unique(user)
+)ENGINE=InnoDB CHARACTER SET=utf8 COLLATE=utf8_general_ci;
+
+CREATE TABLE IF NOT EXISTS abe_user_key(
+  id int auto_increment primary key,
+  owner varchar(60) not null,
+  encrypted_key BLOB not null,
+  unique(owner),
+  foreign key(owner) references abe_attribute_manager(user)
+)ENGINE=InnoDB CHARACTER SET=utf8 COLLATE=utf8_general_ci;
+
+
+CREATE TABLE IF NOT EXISTS abe_shared_table(
+  id int auto_increment primary key,
+  index_info varchar(160) not null,
+  policy_info varchar(160),
+  cyphertext MEDIUMBLOB  not null
+  -- cyphertext MEDIUMBLOB  not null abe_encrypt
+)ENGINE=InnoDB CHARACTER SET=utf8 COLLATE=utf8_general_ci;
+
 
 CREATE TABLE IF NOT EXISTS sec_role (
   user varchar(60) NOT NULL, 

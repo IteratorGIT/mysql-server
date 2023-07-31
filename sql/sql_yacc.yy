@@ -1373,6 +1373,7 @@ void warn_about_deprecated_binary(THD *thd)
 %token<lexer.keyword> ABAC_SYM 820
 %token<lexer.keyword> POLICY_SYM 930
 /*add token end*/
+%token  CURRENT_ABE_USER_KEY 893
 
 /*
   Precedence rules used to resolve the ambiguity when using keywords as idents
@@ -10945,6 +10946,10 @@ function_call_conflict:
         | WEIGHT_STRING_SYM '(' expr ',' ulong_num ',' ulong_num ',' ulong_num ')'
           {
             $$= NEW_PTN Item_func_weight_string(@$, $3, $5, $7, $9);
+          }
+        | CURRENT_ABE_USER_KEY '(' ')'
+          {
+            $$= NEW_PTN Item_func_current_abe_user_key(@$);
           }
         | geometry_function
         ;
