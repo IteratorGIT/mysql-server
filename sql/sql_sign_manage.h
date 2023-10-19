@@ -6,6 +6,9 @@
 
 #include "policy.h"
 #include "sec_sign.h"
+
+#include "attribute_based_encryption/abe.h"
+
 #include <vector>
 using std::vector;
 #include <string>

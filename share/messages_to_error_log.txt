@@ -11578,6 +11578,8 @@ ER_INIT_ADMIN_WITHOUT_PASSWORD
 ER_INIT_AUDITOR_WITHOUT_PASSWORD
   eng "abac_auditor@'%%' is created with an empty password ! Please consider switching off the --initialize-insecure option."
 
+ER_ABE_SYSTEM
+  eng "ABE system error: %s"
 
 # DO NOT add server-to-client messages here;
 # they go in messages_to_clients.txt

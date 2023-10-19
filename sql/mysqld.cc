@@ -1187,6 +1187,12 @@ ulong log_error_verbosity = 3;  // have a non-zero value during early start-up
 bool opt_keyring_migration_to_component = false;
 
 bool separation_of_powers_start = false;
+char *abe_ca_cert_file = nullptr;
+char *abe_db_cert_file = nullptr;
+char *abe_db_key_file = nullptr;
+char *abe_kms_cert_file = nullptr;
+char *abe_kms_ip = nullptr;
+ulong abe_kms_port = 20000;
 
 #if defined(_WIN32)
 /*

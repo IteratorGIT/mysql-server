@@ -7402,3 +7402,39 @@ static Sys_var_bool Sys_separation_of_powers_start(
     "divide the rights of the original root user.",
     READ_ONLY GLOBAL_VAR(separation_of_powers_start),CMD_LINE(OPT_ARG, OPT_SEPARATION_OF_POWERS_START),
     DEFAULT(false), NO_MUTEX_GUARD, NOT_IN_BINLOG);
+
+static Sys_var_charptr Sys_abe_ca_cert_file(
+    "abe_ca_cert_file",
+    "the ca_cert_file of abe system.",
+    READ_ONLY GLOBAL_VAR(abe_ca_cert_file), CMD_LINE(REQUIRED_ARG),
+    IN_FS_CHARSET, DEFAULT(""));
+
+static Sys_var_charptr Sys_abe_db_cert_file(
+    "abe_db_cert_file",
+    "the db_cert_file of abe system.",
+    READ_ONLY GLOBAL_VAR(abe_db_cert_file), CMD_LINE(REQUIRED_ARG),
+    IN_FS_CHARSET, DEFAULT(""));
+
+static Sys_var_charptr Sys_abe_db_key_file(
+    "abe_db_key_file",
+    "the db_key_file of abe system.",
+    READ_ONLY GLOBAL_VAR(abe_db_key_file), CMD_LINE(REQUIRED_ARG),
+    IN_FS_CHARSET, DEFAULT(""));
+
+static Sys_var_charptr Sys_abe_kms_cert_file(
+    "abe_kms_cert_file",
+    "the kms_cert_file of abe system.",
+    READ_ONLY GLOBAL_VAR(abe_kms_cert_file), CMD_LINE(REQUIRED_ARG),
+    IN_FS_CHARSET, DEFAULT(""));
+
+static Sys_var_charptr Sys_abe_kms_ip(
+    "abe_kms_ip",
+    "the abe_kms_ip of abe system.",
+    READ_ONLY GLOBAL_VAR(abe_kms_ip), CMD_LINE(REQUIRED_ARG),
+    IN_FS_CHARSET, DEFAULT(""));
+
+static Sys_var_ulong Sys_abe_kms_port(
+    "abe_kms_port",
+    "the abe_kms_port of abe system.",
+    READ_ONLY GLOBAL_VAR(abe_kms_port), CMD_LINE(REQUIRED_ARG),
+    VALID_RANGE(0, 65535), DEFAULT(20000), BLOCK_SIZE(1));

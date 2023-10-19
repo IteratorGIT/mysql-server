@@ -630,6 +630,11 @@ SET(SQL_SHARED_SOURCES
   #added in securich
   link_sec.cc tree_sec.cc sec_sign.cc
   sql_sign_manage.cc policy.cc SyntaxParseAnalysis.cc
+  #abe
+  attribute_based_encryption/base64.cc
+  attribute_based_encryption/cJSON.cc
+  attribute_based_encryption/abe_ssl.cc
+  attribute_based_encryption/abe.cc
   )
 
 IF(BUILD_IS_SINGLE_CONFIG)

@@ -820,5 +820,15 @@ extern SERVICE_TYPE(dynamic_loader) * dynamic_loader_srv;
 
 class Deployed_components;
 extern Deployed_components *g_deployed_components;
+
 extern bool separation_of_powers_start;
+
+/*abe system*/
+extern char *abe_ca_cert_file;
+extern char *abe_db_cert_file;
+extern char *abe_db_key_file;
+extern char *abe_kms_cert_file;
+extern char *abe_kms_ip;
+extern ulong abe_kms_port;
+
 #endif /* MYSQLD_INCLUDED */
